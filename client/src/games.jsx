@@ -1823,26 +1823,47 @@ function WhackGame({ game, onFinish, difficulty }) {
 function WordGame({ game, onFinish, difficulty }) {
   const finish = useFinish(onFinish);
   const [word, setWord] = useState(() => WORDS[0]);
+  const [scrambled, setScrambled] = useState("");
   const [input, setInput] = useState("");
   const [score, setScore] = useState(0);
   const scoreRef = useRef(0);
   const [time, setTime] = useState(45);
   const [running, setRunning] = useState(false);
 
-  const nextWord = () => {
+  const nextWord = (currentWord) => {
     const list = difficulty === "easy" ? ["NEON", "GRID", "TOWER", "PONG", "BOT"] :
                  difficulty === "hard" ? ["SPACESHOOTER", "NEON-ARCADE", "VECTOR-RUN", "WORLD-ARCADE"] :
                  WORDS;
-    return list[Math.floor(Math.random() * list.length)];
+    if (list.length <= 1) return list[0];
+    let next = list[Math.floor(Math.random() * list.length)];
+    while (next === currentWord) {
+      next = list[Math.floor(Math.random() * list.length)];
+    }
+    return next;
   };
+
+  const scrambleWord = (w) => {
+    if (w.length <= 1) return w;
+    let s = w;
+    let attempts = 0;
+    while (s === w && attempts < 20) {
+      s = shuffle(w.split("")).join("");
+      attempts++;
+    }
+    return s;
+  };
+
   const restart = () => {
-    setWord(nextWord());
+    const newW = nextWord("");
+    setWord(newW);
+    setScrambled(scrambleWord(newW));
     setInput("");
     scoreRef.current = 0;
     setScore(0);
     setTime(45);
     setRunning(true);
   };
+
   const submit = (event) => {
     event.preventDefault();
     if (!running) return;
@@ -1850,7 +1871,9 @@ function WordGame({ game, onFinish, difficulty }) {
       playGameSound(game, "score");
       scoreRef.current += word.length * 20;
       setScore(scoreRef.current);
-      setWord(nextWord());
+      const newW = nextWord(word);
+      setWord(newW);
+      setScrambled(scrambleWord(newW));
       setInput("");
     } else {
       playGameSound(game, "hit");
@@ -1872,7 +1895,7 @@ function WordGame({ game, onFinish, difficulty }) {
   return (
     <GameShell game={game} title="Score" score={score} meta={`${time}s`} controls={game.controls} onStart={restart} running={running}>
       <form className="word-panel" onSubmit={submit}>
-        <strong>{shuffle(word.split("")).join("")}</strong>
+        <strong>{scrambled || shuffle((word || "").split("")).join("")}</strong>
         <input value={input} onChange={(event) => setInput(event.target.value)} placeholder="Type answer" />
         <ArcadeButton type="submit" disabled={!running}>Submit</ArcadeButton>
       </form>
