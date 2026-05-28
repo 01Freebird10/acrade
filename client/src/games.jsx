@@ -714,7 +714,8 @@ function CanvasBallGame({ game, onFinish, mode, difficulty }) {
       paddle: 300,
       paddleWidth: paddleW,
       ai: 160,
-      bricks: Array.from({ length: 32 }, (_, i) => ({ x: 45 + (i % 8) * 74, y: 42 + Math.floor(i / 8) * 28, alive: true }))
+      bricks: Array.from({ length: 32 }, (_, i) => ({ x: 45 + (i % 8) * 74, y: 42 + Math.floor(i / 8) * 28, alive: true })),
+      keys: {}
     };
     particlesRef.current = [];
     shakeRef.current = { duration: 0, magnitude: 0 };
@@ -725,39 +726,33 @@ function CanvasBallGame({ game, onFinish, mode, difficulty }) {
   };
 
   useEffect(() => {
-    const handler = (event) => {
+    const handleKeyDown = (event) => {
       if (!state.current) return;
       if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "KeyW", "KeyS", "KeyA", "KeyD"].includes(event.code)) {
         event.preventDefault();
-      }
-      if (mode === "pong") {
-        // Left paddle controlled by Left Arrow (UP) and Down Arrow (DOWN)
-        if (event.code === "ArrowLeft" || event.code === "KeyA") {
-          state.current.ai -= 34;
-        }
-        if (event.code === "ArrowDown" || event.code === "KeyS") {
-          state.current.ai += 34;
-        }
-        // Right paddle controlled by Up Arrow (UP) and Right Arrow (DOWN)
-        if (event.code === "ArrowUp" || event.code === "KeyW") {
-          state.current.paddle -= 34;
-        }
-        if (event.code === "ArrowRight" || event.code === "KeyD") {
-          state.current.paddle += 34;
-        }
-      } else {
-        // Breakout paddle moves horizontally
-        if (event.code === "ArrowLeft" || event.code === "KeyA") {
-          state.current.paddle -= 34;
-        }
-        if (event.code === "ArrowRight" || event.code === "KeyD") {
-          state.current.paddle += 34;
+        if (state.current.keys) {
+          state.current.keys[event.code] = true;
         }
       }
     };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [mode]);
+
+    const handleKeyUp = (event) => {
+      if (!state.current) return;
+      if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "KeyW", "KeyS", "KeyA", "KeyD"].includes(event.code)) {
+        event.preventDefault();
+        if (state.current.keys) {
+          state.current.keys[event.code] = false;
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -785,6 +780,35 @@ function CanvasBallGame({ game, onFinish, mode, difficulty }) {
         }
         drawBallCanvas(ctx, s, mode, game, canvas, shakeRef.current, particlesRef.current);
         return;
+      }
+
+      // High-frequency polling keyboard movement for buttery-smooth skate control
+      const keys = s.keys || {};
+      const moveSpeed = 8.5; // Fine-tuned speed for comfortable, precise control
+
+      if (mode === "pong") {
+        // Left paddle controlled by Left Arrow (UP) and Down Arrow (DOWN)
+        if (keys["ArrowLeft"] || keys["KeyA"]) {
+          s.ai -= moveSpeed;
+        }
+        if (keys["ArrowDown"] || keys["KeyS"]) {
+          s.ai += moveSpeed;
+        }
+        // Right paddle controlled by Up Arrow (UP) and Right Arrow (DOWN)
+        if (keys["ArrowUp"] || keys["KeyW"]) {
+          s.paddle -= moveSpeed;
+        }
+        if (keys["ArrowRight"] || keys["KeyD"]) {
+          s.paddle += moveSpeed;
+        }
+      } else {
+        // Breakout paddle moves horizontally
+        if (keys["ArrowLeft"] || keys["KeyA"]) {
+          s.paddle -= moveSpeed;
+        }
+        if (keys["ArrowRight"] || keys["KeyD"]) {
+          s.paddle += moveSpeed;
+        }
       }
 
       // Paddle position constraints based on game mode
