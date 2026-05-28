@@ -24,6 +24,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GAMES, GameArtwork, PlayableGame } from "./games.jsx";
 
+const API_BASE = import.meta.env.VITE_API_BASE || "";
 const TOKEN_KEY = "neon-arcade-token";
 const LEVEL_KEY = "neon-arcade-levels";
 const EMPTY_FRIENDS = { friends: [], incoming: [], outgoing: [] };
@@ -261,8 +262,8 @@ export default function App() {
     try {
       const suffix = diff !== "all" ? `&difficulty=${diff}` : "";
       const [gameScores, worldScores] = await Promise.all([
-        fetch(`/api/scores?gameId=${gameId}&limit=10${suffix}`).then(readJson),
-        fetch("/api/scores?limit=8").then(readJson)
+        fetch(`${API_BASE}/api/scores?gameId=${gameId}&limit=10${suffix}`).then(readJson),
+        fetch(`${API_BASE}/api/scores?limit=8`).then(readJson)
       ]);
       setScores(gameScores);
       setGlobalScores(worldScores);
@@ -279,7 +280,7 @@ export default function App() {
       if (diff !== "all") queryParts.push(`difficulty=${diff}`);
       queryParts.push("limit=30");
       const suffix = queryParts.join("&");
-      const data = await fetch(`/api/scores?${suffix}`).then(readJson);
+      const data = await fetch(`${API_BASE}/api/scores?${suffix}`).then(readJson);
       setBoardScores(data);
     } catch {
       setBoardScores([]);
@@ -289,7 +290,7 @@ export default function App() {
   const loadChallenges = useCallback(async () => {
     if (!token) return;
     try {
-      const data = await fetch("/api/challenges", { headers: apiHeaders(token) }).then(readJson);
+      const data = await fetch(`${API_BASE}/api/challenges`, { headers: apiHeaders(token) }).then(readJson);
       setChallenges(data);
     } catch {
       setChallenges([]);
@@ -299,7 +300,7 @@ export default function App() {
   const loadFriends = useCallback(async () => {
     if (!token) return;
     try {
-      const data = await fetch("/api/friends", { headers: apiHeaders(token) }).then(readJson);
+      const data = await fetch(`${API_BASE}/api/friends`, { headers: apiHeaders(token) }).then(readJson);
       setFriendsData({
         friends: data.friends || [],
         incoming: data.incoming || [],
@@ -313,7 +314,7 @@ export default function App() {
   }, [token]);
 
   useEffect(() => {
-    fetch("/api/health")
+    fetch(`${API_BASE}/api/health`)
       .then(readJson)
       .then((data) => setApiMode(data.mode || "memory"))
       .catch(() => setApiMode("offline"));
@@ -321,13 +322,13 @@ export default function App() {
 
   useEffect(() => {
     if (!token) return;
-    fetch("/api/auth/me", { headers: apiHeaders(token) })
+    fetch(`${API_BASE}/api/auth/me`, { headers: apiHeaders(token) })
       .then(readJson)
       .then((data) => {
         setUser(data.user);
         userLoadedRef.current = true;
 
-        fetch("/api/scores/personal", { headers: apiHeaders(token) })
+        fetch(`${API_BASE}/api/scores/personal`, { headers: apiHeaders(token) })
           .then(readJson)
           .then((records) => {
             if (records && typeof records === "object") {
@@ -377,7 +378,7 @@ export default function App() {
     setAuthError("");
 
     try {
-      const data = await fetch(`/api/auth/${authMode}`, {
+      const data = await fetch(`${API_BASE}/api/auth/${authMode}`, {
         method: "POST",
         headers: apiHeaders(),
         body: JSON.stringify({ username, password })
@@ -423,7 +424,7 @@ export default function App() {
     const game = GAMES.find((item) => item.id === gameId) || selectedGame;
     setChallengeError("");
     try {
-      const challenge = await fetch("/api/challenges", {
+      const challenge = await fetch(`${API_BASE}/api/challenges`, {
         method: "POST",
         headers: apiHeaders(token),
         body: JSON.stringify({
@@ -446,7 +447,7 @@ export default function App() {
   const sendFriendRequest = async (username) => {
     setFriendError("");
     try {
-      await fetch("/api/friends/requests", {
+      await fetch(`${API_BASE}/api/friends/requests`, {
         method: "POST",
         headers: apiHeaders(token),
         body: JSON.stringify({ username })
@@ -460,14 +461,14 @@ export default function App() {
   };
 
   const refreshUser = async () => {
-    const data = await fetch("/api/auth/me", { headers: apiHeaders(token) }).then(readJson);
+    const data = await fetch(`${API_BASE}/api/auth/me`, { headers: apiHeaders(token) }).then(readJson);
     setUser(data.user);
   };
 
   const acceptFriendRequest = async (id) => {
     setFriendError("");
     try {
-      await fetch(`/api/friends/requests/${id}/accept`, {
+      await fetch(`${API_BASE}/api/friends/requests/${id}/accept`, {
         method: "POST",
         headers: apiHeaders(token)
       }).then(readJson);
@@ -482,7 +483,7 @@ export default function App() {
   const rejectFriendRequest = async (id) => {
     setFriendError("");
     try {
-      await fetch(`/api/friends/requests/${id}/reject`, {
+      await fetch(`${API_BASE}/api/friends/requests/${id}/reject`, {
         method: "POST",
         headers: apiHeaders(token)
       }).then(readJson);
@@ -498,7 +499,7 @@ export default function App() {
     setProfileError("");
     setProfileSaved("");
     try {
-      const data = await fetch("/api/profile", {
+      const data = await fetch(`${API_BASE}/api/profile`, {
         method: "PATCH",
         headers: apiHeaders(token),
         body: JSON.stringify({ bio, avatar, username })
@@ -529,7 +530,7 @@ export default function App() {
     setPosting(true);
 
     try {
-      await fetch("/api/scores", {
+      await fetch(`${API_BASE}/api/scores`, {
         method: "POST",
         headers: apiHeaders(token),
         body: JSON.stringify({
@@ -539,7 +540,7 @@ export default function App() {
         })
       }).then(readJson);
       if (activeChallenge?.gameId === selectedGame.id) {
-        const updatedChallenge = await fetch(`/api/challenges/${activeChallenge.id}/score`, {
+        const updatedChallenge = await fetch(`${API_BASE}/api/challenges/${activeChallenge.id}/score`, {
           method: "POST",
           headers: apiHeaders(token),
           body: JSON.stringify({ score: run.score })
