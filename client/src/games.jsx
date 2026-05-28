@@ -1502,7 +1502,6 @@ function MazeGame({ game, onFinish, difficulty }) {
 
 function RacingGame({ game, onFinish, difficulty }) {
   const finish = useFinish(onFinish);
-  const keys = useRef(new Set());
   const canvasRef = useRef(null);
   const state = useRef(null);
   const [running, setRunning] = useState(false);
@@ -1511,8 +1510,6 @@ function RacingGame({ game, onFinish, difficulty }) {
   const startTime = useRef(Date.now());
   const particlesRef = useRef([]);
   const shakeRef = useRef({ duration: 0, magnitude: 0 });
-
-  useKeys(keys);
 
   const start = () => {
     startTime.current = Date.now();
@@ -1523,6 +1520,23 @@ function RacingGame({ game, onFinish, difficulty }) {
     setScore(0);
     setRunning(true);
   };
+
+  useEffect(() => {
+    const handler = (event) => {
+      if (!running || !state.current) return;
+      if (["ArrowLeft", "ArrowRight", "KeyA", "KeyD"].includes(event.code)) {
+        event.preventDefault();
+      }
+      if (event.code === "ArrowLeft" || event.code === "KeyA") {
+        state.current.lane = Math.max(0, state.current.lane - 1);
+      }
+      if (event.code === "ArrowRight" || event.code === "KeyD") {
+        state.current.lane = Math.min(2, state.current.lane + 1);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [running]);
 
   useInterval(
     () => {
@@ -1538,8 +1552,6 @@ function RacingGame({ game, onFinish, difficulty }) {
         return;
       }
       s.ticks += 1;
-      if (keys.current.has("ArrowLeft")) s.lane = Math.max(0, s.lane - 1);
-      if (keys.current.has("ArrowRight")) s.lane = Math.min(2, s.lane + 1);
       if (s.ticks % 32 === 0) s.cars.push({ lane: Math.floor(Math.random() * 3), y: -60 });
       s.cars.forEach((car) => (car.y += 6 + scoreRef.current / 260));
 
