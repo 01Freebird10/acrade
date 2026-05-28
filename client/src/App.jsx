@@ -172,6 +172,7 @@ export default function App() {
   const [difficulty, setDifficulty] = useState("medium");
   const [levelUp, setLevelUp] = useState(null);
   const [gameOverRun, setGameOverRun] = useState(null);
+  const [autoStartKey, setAutoStartKey] = useState(0);
   const [posting, setPosting] = useState(false);
   const [apiMode, setApiMode] = useState("checking");
   const userLoadedRef = useRef(false);
@@ -704,10 +705,17 @@ export default function App() {
           onOpenGame={openGame}
           gameDiffFilter={gameDiffFilter}
           setGameDiffFilter={setGameDiffFilter}
+          autoStartKey={autoStartKey}
         />
       )}
       {gameOverRun && (
-        <GameOverModal gameOverRun={gameOverRun} onClose={() => setGameOverRun(null)} />
+        <GameOverModal
+          gameOverRun={gameOverRun}
+          onClose={() => {
+            setGameOverRun(null);
+            setAutoStartKey((prev) => prev + 1);
+          }}
+        />
       )}
     </main>
   );
@@ -1131,7 +1139,8 @@ function GameView({
   rateGame,
   onOpenGame,
   gameDiffFilter,
-  setGameDiffFilter
+  setGameDiffFilter,
+  autoStartKey
 }) {
   const playShellRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -1200,7 +1209,7 @@ function GameView({
         <div className="playroom-stage-container">
           <div ref={playShellRef} className="play-shell crt-frame">
             <div className="crt-glow-overlay" />
-            <PlayableGame key={`${game.id}-${difficulty}`} game={game} onFinish={onFinish} difficulty={difficulty} />
+            <PlayableGame key={`${game.id}-${difficulty}-${autoStartKey}`} game={game} onFinish={onFinish} difficulty={difficulty} autoStart={autoStartKey > 0} />
             <div className="playroom-feedback-bar">
               <div className="rating-widget">
                 <span>Rate Game:</span>

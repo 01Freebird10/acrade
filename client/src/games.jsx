@@ -212,8 +212,8 @@ export function GameProfile({ game }) {
   );
 }
 
-export function PlayableGame({ game, onFinish, difficulty = "medium" }) {
-  const props = { game, onFinish, difficulty };
+export function PlayableGame({ game, onFinish, difficulty = "medium", autoStart = false }) {
+  const props = { game, onFinish, difficulty, autoStart };
 
   if (game.engine === "snake") return <SnakeGame {...props} />;
   if (game.engine === "tetris") return <TetrisGame {...props} />;
@@ -1820,7 +1820,7 @@ function WhackGame({ game, onFinish, difficulty }) {
   );
 }
 
-function WordGame({ game, onFinish, difficulty }) {
+function WordGame({ game, onFinish, difficulty, autoStart }) {
   const finish = useFinish(onFinish);
   const [word, setWord] = useState("");
   const [scrambled, setScrambled] = useState("");
@@ -1910,7 +1910,13 @@ function WordGame({ game, onFinish, difficulty }) {
       // Wrong guess triggers immediate game-over
       setRunning(false);
       playGameSound(game, "over");
-      finish({ score: scoreRef.current, level: Math.max(1, Math.floor(scoreRef.current / 5) + 1), duration: secondsSince(startTime), detail: "Incorrect guess" });
+      finish({ score: scoreRef.current, level: Math.max(1, Math.floor(scoreRef.current / 5) + 1), duration: secondsSince(startTime), detail: `WRONG! The correct word was: ${word}` });
+
+      // Reset input immediately and scramble a fresh word so the background doesn't show old failed state
+      setInput("");
+      const freshW = nextWord(word);
+      setWord(freshW);
+      setScrambled(scrambleWord(freshW));
     }
   };
 
@@ -1961,7 +1967,14 @@ function WordGame({ game, onFinish, difficulty }) {
     const initialW = nextWord("");
     setWord(initialW);
     setScrambled(scrambleWord(initialW));
-  }, [difficulty]);
+
+    if (autoStart) {
+      const timer = setTimeout(() => {
+        restart();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [difficulty, autoStart]);
 
   return (
     <GameShell game={game} title="Score" score={score} meta="Sudden Death" controls={game.controls} onStart={restart} running={running}>
