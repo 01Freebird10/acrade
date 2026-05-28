@@ -802,17 +802,14 @@ function CanvasBallGame({ game, onFinish, mode, difficulty }) {
       if (mode === "breakout") {
         if (s.ball.x < 8 || s.ball.x > 652) {
           s.ball.vx *= -1;
-          shakeRef.current = { duration: 5, magnitude: 2.5 };
         }
         if (s.ball.y < 8) {
           s.ball.vy *= -1;
-          shakeRef.current = { duration: 5, magnitude: 2.5 };
         }
       } else {
         // Pong mode vertical wall boundaries (bounces off top and bottom walls)
         if (s.ball.y < 8 || s.ball.y > 422) {
           s.ball.vy *= -1;
-          shakeRef.current = { duration: 5, magnitude: 2.5 };
         }
       }
 
@@ -834,7 +831,6 @@ function CanvasBallGame({ game, onFinish, mode, difficulty }) {
           playGameSound(game, "hit");
           scoreRef.current += 10;
           setScore(scoreRef.current);
-          shakeRef.current = { duration: 6, magnitude: 3 };
           for (let i = 0; i < 8; i++) {
             particlesRef.current.push({
               x: 35,
@@ -854,7 +850,6 @@ function CanvasBallGame({ game, onFinish, mode, difficulty }) {
           playGameSound(game, "hit");
           scoreRef.current += 10;
           setScore(scoreRef.current);
-          shakeRef.current = { duration: 6, magnitude: 3 };
           for (let i = 0; i < 8; i++) {
             particlesRef.current.push({
               x: 582,
@@ -876,7 +871,6 @@ function CanvasBallGame({ game, onFinish, mode, difficulty }) {
           playGameSound(game, "hit");
           scoreRef.current += 5;
           setScore(scoreRef.current);
-          shakeRef.current = { duration: 6, magnitude: 3 };
           for (let i = 0; i < 8; i++) {
             particlesRef.current.push({
               x: s.ball.x,
@@ -897,7 +891,6 @@ function CanvasBallGame({ game, onFinish, mode, difficulty }) {
             playGameSound(game, "score");
             scoreRef.current += 25;
             setScore(scoreRef.current);
-            shakeRef.current = { duration: 10, magnitude: 5.5 };
             createNeonExplosion(particlesRef.current, brick.x + 29, brick.y + 9, [game.colors[1], "#ffffff"], 14);
           }
         });
@@ -916,17 +909,16 @@ function CanvasBallGame({ game, onFinish, mode, difficulty }) {
   );
 
   function loseLife() {
-    shakeRef.current = { duration: 25, magnitude: 9 };
-    setLives((value) => {
-      const next = mode === "pong" ? 0 : value - 1;
-      if (next <= 0) {
-        setRunning(false);
-        playGameSound(game, "over");
-        finish({ score: scoreRef.current, level: Math.max(1, Math.floor(scoreRef.current / 120) + 1), duration: secondsSince(startTime), detail: mode === "pong" ? "Rally ended" : "Bricks broken" });
-      }
-      return next;
+    shakeRef.current = { duration: 32, magnitude: 11 };
+    setRunning(false);
+    playGameSound(game, "over");
+    finish({
+      score: scoreRef.current,
+      level: Math.max(1, Math.floor(scoreRef.current / 120) + 1),
+      duration: secondsSince(startTime),
+      detail: mode === "pong" ? "Rally ended" : "Ball escaped"
     });
-    if (state.current) state.current.ball = { x: 330, y: 220, vx: 4, vy: -4 };
+    setLives(0);
   }
 
   return (
