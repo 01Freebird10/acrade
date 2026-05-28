@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="420" viewBox="0 0 960 420" role="img" aria-label="Flappy Drone game banner">
+  
+  <defs>
+    <linearGradient id="g-flappy-drone" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#082f49"/>
+      <stop offset="58%" stop-color="#08111f"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
+    </linearGradient>
+    <radialGradient id="pulse-flappy-drone" cx="30%" cy="35%" r="55%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity=".55"/>
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow-flappy-drone" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="960" height="420" fill="url(#g-flappy-drone)"/>
+  <rect width="960" height="420" fill="url(#pulse-flappy-drone)"/>
+  <g opacity=".16">
+    <path d="M0 0V420" stroke="#fff"/><path d="M44 0V420" stroke="#fff"/><path d="M88 0V420" stroke="#fff"/><path d="M132 0V420" stroke="#fff"/><path d="M176 0V420" stroke="#fff"/><path d="M220 0V420" stroke="#fff"/><path d="M264 0V420" stroke="#fff"/><path d="M308 0V420" stroke="#fff"/><path d="M352 0V420" stroke="#fff"/><path d="M396 0V420" stroke="#fff"/><path d="M440 0V420" stroke="#fff"/><path d="M484 0V420" stroke="#fff"/><path d="M528 0V420" stroke="#fff"/><path d="M572 0V420" stroke="#fff"/><path d="M616 0V420" stroke="#fff"/><path d="M660 0V420" stroke="#fff"/><path d="M704 0V420" stroke="#fff"/><path d="M748 0V420" stroke="#fff"/><path d="M792 0V420" stroke="#fff"/><path d="M836 0V420" stroke="#fff"/><path d="M880 0V420" stroke="#fff"/><path d="M924 0V420" stroke="#fff"/><path d="M968 0V420" stroke="#fff"/><path d="M1012 0V420" stroke="#fff"/><path d="M1056 0V420" stroke="#fff"/>
+    <path d="M0 0H960" stroke="#fff"/><path d="M0 42H960" stroke="#fff"/><path d="M0 84H960" stroke="#fff"/><path d="M0 126H960" stroke="#fff"/><path d="M0 168H960" stroke="#fff"/><path d="M0 210H960" stroke="#fff"/><path d="M0 252H960" stroke="#fff"/><path d="M0 294H960" stroke="#fff"/><path d="M0 336H960" stroke="#fff"/><path d="M0 378H960" stroke="#fff"/><path d="M0 420H960" stroke="#fff"/><path d="M0 462H960" stroke="#fff"/>
+  </g>
+  <g opacity=".22">
+    <circle cx="110" cy="90" r="72" fill="#fff"/>
+    <circle cx="850" cy="330" r="96" fill="#38bdf8"/>
+  </g>
+  <g>
+    <ellipse cx="480" cy="210" rx="96" ry="54" fill="#fff" opacity=".88" filter="url(#glow-flappy-drone)"/>
+    <rect x="310" y="198" width="340" height="24" rx="12" fill="#38bdf8"/>
+    <circle cx="302" cy="210" r="46" fill="none" stroke="#38bdf8" stroke-width="16" filter="url(#glow-flappy-drone)"/>
+    <circle cx="658" cy="210" r="46" fill="none" stroke="#38bdf8" stroke-width="16" filter="url(#glow-flappy-drone)"/>
+    <rect x="720" y="0" width="56" height="142" rx="18" fill="#38bdf8" opacity=".76"/>
+    <rect x="720" y="270" width="56" height="160" rx="18" fill="#38bdf8" opacity=".76"/></g>
+  <rect x="0" y="0" width="960" height="420" fill="url(#pulse-flappy-drone)" opacity=".45"/>
+</svg>
