@@ -521,6 +521,11 @@ export default function App() {
   };
 
   const handleFinish = async (result) => {
+    // Exit fullscreen mode if active, so the GameOverModal is fully visible in normal layout
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    }
+
     const scoreVal = Math.max(0, Math.round(result.score || 0));
     const run = {
       score: scoreVal,

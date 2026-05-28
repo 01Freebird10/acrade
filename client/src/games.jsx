@@ -1820,6 +1820,15 @@ function WhackGame({ game, onFinish, difficulty }) {
   );
 }
 
+const VALID_DICTIONARY = new Set([
+  // Game list words
+  "NEON", "GRID", "TOWER", "PONG", "BOT", "LOOP", "PLAY", "GAME", "DISK", "CHIP", "CORE", "LINK", "PIXEL", "SHIFT", "BYTE",
+  "ARCADE", "VECTOR", "PLAYER", "ROCKET", "PUZZLE", "RACING", "CYBER", "MATRIX", "RETRO", "GLITCH", "SYNTH", "SHIELD", "SCREEN",
+  "SPACESHOOTER", "NEONARCADE", "VECTORRUN", "WORLDARCADE", "CYBERPUNK", "LEVELDESIGN", "HIGHSCORE", "DEVELOPER", "ALGORITHM", "SYNTHWAVE",
+  // Common valid English anagrams of the game words
+  "POOL", "POLO", "WROTE", "MEGA", "KILN", "GIRD", "ACRE", "RACE", "CARE"
+]);
+
 function WordGame({ game, onFinish, difficulty, autoStart }) {
   const finish = useFinish(onFinish);
   const [word, setWord] = useState("");
@@ -1877,7 +1886,11 @@ function WordGame({ game, onFinish, difficulty, autoStart }) {
     const cleanVal = val.toUpperCase().replace(/[^A-Z]/g, "").slice(0, word.length);
     setInput(cleanVal);
 
-    if (cleanVal === word) {
+    const isCorrectWord = cleanVal === word;
+    const isAnagram = cleanVal.split("").sort().join("") === word.split("").sort().join("");
+    const isAlternativeValid = isAnagram && VALID_DICTIONARY.has(cleanVal);
+
+    if (isCorrectWord || isAlternativeValid) {
       playGameSound(game, "score");
       scoreRef.current += 1;
       setScore(scoreRef.current);
@@ -1895,7 +1908,12 @@ function WordGame({ game, onFinish, difficulty, autoStart }) {
     if (event) event.preventDefault();
     if (!running) return;
 
-    if (input.trim().toUpperCase() === word) {
+    const typedWord = input.trim().toUpperCase();
+    const isCorrectWord = typedWord === word;
+    const isAnagram = typedWord.split("").sort().join("") === word.split("").sort().join("");
+    const isAlternativeValid = isAnagram && VALID_DICTIONARY.has(typedWord);
+
+    if (isCorrectWord || isAlternativeValid) {
       playGameSound(game, "score");
       scoreRef.current += 1;
       setScore(scoreRef.current);
