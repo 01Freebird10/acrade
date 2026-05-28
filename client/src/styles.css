@@ -2601,3 +2601,185 @@ select:focus {
   z-index: 100000;
 }
 
+/* ==========================================================================
+   WORD SCRAMBLE PREMIUM REDESIGN
+   ========================================================================= */
+.word-scramble-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: min(100%, 520px);
+  margin: 0 auto;
+  padding: 16px;
+  background: rgba(13, 20, 38, 0.6);
+  border: 1px solid rgba(0, 243, 255, 0.25);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 0 16px rgba(0, 243, 255, 0.05);
+  backdrop-filter: blur(8px);
+}
+
+.scrambled-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: 8px 0;
+}
+
+.scramble-tile {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, rgba(26, 36, 68, 0.9), rgba(13, 20, 38, 0.95));
+  border: 1px solid rgba(0, 243, 255, 0.5);
+  border-radius: 8px;
+  color: #00f3ff;
+  font-family: "Bahnschrift", monospace;
+  font-size: 1.4rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(0, 243, 255, 0.25), inset 0 0 4px rgba(0, 243, 255, 0.2);
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.scramble-tile:hover:not(:disabled) {
+  transform: translateY(-3px) scale(1.05);
+  border-color: #ff007f;
+  color: #ff007f;
+  box-shadow: 0 0 15px rgba(255, 0, 127, 0.5), inset 0 0 6px rgba(255, 0, 127, 0.3);
+}
+
+.scramble-tile:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.scramble-tile.used {
+  opacity: 0.25;
+  cursor: default;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.3);
+  background: rgba(10, 15, 30, 0.5);
+  box-shadow: none;
+  transform: none;
+}
+
+.guess-slots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.guess-slot {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  background: rgba(7, 10, 21, 0.85);
+  border: 1px dashed rgba(0, 243, 255, 0.3);
+  border-radius: 6px;
+  color: #39ff14;
+  font-family: "Bahnschrift", monospace;
+  font-size: 1.3rem;
+  font-weight: 700;
+  text-shadow: 0 0 6px rgba(57, 255, 20, 0.7);
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.8);
+  transition: all 0.2s ease;
+}
+
+.guess-slot.filled {
+  border: 1px solid #39ff14;
+  background: rgba(57, 255, 20, 0.05);
+  box-shadow: 0 0 10px rgba(57, 255, 20, 0.3), inset 0 0 6px rgba(57, 255, 20, 0.15);
+  animation: popIn 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.guess-slot.active {
+  border: 1px solid #ffcc00;
+  box-shadow: 0 0 8px rgba(255, 204, 0, 0.4);
+  animation: pulseActive 1.2s infinite ease-in-out;
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.85); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pulseActive {
+  0%, 100% { border-color: rgba(255, 204, 0, 0.3); }
+  50% { border-color: rgba(255, 204, 0, 0.95); }
+}
+
+.scramble-entry-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.scramble-textarea {
+  width: 100%;
+  height: 68px;
+  background: linear-gradient(180deg, rgba(8, 12, 24, 0.9), rgba(5, 7, 14, 0.95));
+  border: 1px solid #00f3ff;
+  border-radius: 8px;
+  box-shadow: 0 0 12px rgba(0, 243, 255, 0.15), inset 0 0 8px rgba(0, 0, 0, 0.8);
+  color: #00f3ff;
+  font-family: "Consolas", "Courier New", monospace;
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 12px;
+  resize: none;
+  text-transform: uppercase;
+  outline: none;
+  box-sizing: border-box;
+  letter-spacing: 2px;
+  transition: all 0.25s ease;
+}
+
+.scramble-textarea:focus {
+  border-color: #ff007f;
+  box-shadow: 0 0 18px rgba(255, 0, 127, 0.3), inset 0 0 8px rgba(0, 0, 0, 0.9);
+  color: #ff007f;
+}
+
+.scramble-textarea::placeholder {
+  color: rgba(0, 243, 255, 0.35);
+  font-size: 0.95rem;
+  letter-spacing: 0px;
+  text-transform: none;
+}
+
+.scramble-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.2fr;
+  gap: 12px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.scramble-actions .action-btn {
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+}
+
+.scramble-actions .shuffle-btn {
+  --arcade-color: #ffcc00;
+  --arcade-hover: #e6b800;
+  --arcade-glow: rgba(255, 204, 0, 0.35);
+}
+
+.scramble-actions .clear-btn {
+  --arcade-color: #ff3b30;
+  --arcade-hover: #d32f2f;
+  --arcade-glow: rgba(255, 59, 48, 0.35);
+}
+
+.scramble-actions .submit-btn {
+  --arcade-color: #39ff14;
+  --arcade-hover: #32cd32;
+  --arcade-glow: rgba(57, 255, 20, 0.35);
+}
+
+

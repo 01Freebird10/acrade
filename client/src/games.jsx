@@ -1822,18 +1822,23 @@ function WhackGame({ game, onFinish, difficulty }) {
 
 function WordGame({ game, onFinish, difficulty }) {
   const finish = useFinish(onFinish);
-  const [word, setWord] = useState(() => WORDS[0]);
+  const [word, setWord] = useState("");
   const [scrambled, setScrambled] = useState("");
   const [input, setInput] = useState("");
   const [score, setScore] = useState(0);
   const scoreRef = useRef(0);
-  const [time, setTime] = useState(45);
+  const startTime = useRef(Date.now());
   const [running, setRunning] = useState(false);
+  const textareaRef = useRef(null);
 
   const nextWord = (currentWord) => {
-    const list = difficulty === "easy" ? ["NEON", "GRID", "TOWER", "PONG", "BOT"] :
-                 difficulty === "hard" ? ["SPACESHOOTER", "NEON-ARCADE", "VECTOR-RUN", "WORLD-ARCADE"] :
-                 WORDS;
+    const easyList = ["NEON", "GRID", "TOWER", "PONG", "BOT", "LOOP", "PLAY", "GAME", "DISK", "CHIP", "CORE", "LINK", "PIXEL", "SHIFT", "BYTE"];
+    const mediumList = ["ARCADE", "VECTOR", "PLAYER", "ROCKET", "PUZZLE", "RACING", "CYBER", "MATRIX", "RETRO", "GLITCH", "SYNTH", "SHIELD", "SCREEN"];
+    const hardList = ["SPACESHOOTER", "NEONARCADE", "VECTORRUN", "WORLDARCADE", "CYBERPUNK", "LEVELDESIGN", "HIGHSCORE", "DEVELOPER", "ALGORITHM", "SYNTHWAVE"];
+
+    const list = difficulty === "easy" ? easyList :
+                 difficulty === "hard" ? hardList :
+                 mediumList;
     if (list.length <= 1) return list[0];
     let next = list[Math.floor(Math.random() * list.length)];
     while (next === currentWord) {
@@ -1854,51 +1859,173 @@ function WordGame({ game, onFinish, difficulty }) {
   };
 
   const restart = () => {
+    startTime.current = Date.now();
     const newW = nextWord("");
     setWord(newW);
     setScrambled(scrambleWord(newW));
     setInput("");
     scoreRef.current = 0;
     setScore(0);
-    setTime(45);
     setRunning(true);
+    setTimeout(() => {
+      textareaRef.current?.focus();
+    }, 50);
   };
 
-  const submit = (event) => {
-    event.preventDefault();
+  const handleInputChange = (val) => {
     if (!running) return;
-    if (input.trim().toUpperCase() === word) {
+    const cleanVal = val.toUpperCase().replace(/[^A-Z]/g, "").slice(0, word.length);
+    setInput(cleanVal);
+
+    if (cleanVal === word) {
       playGameSound(game, "score");
-      scoreRef.current += word.length * 20;
+      scoreRef.current += 1;
       setScore(scoreRef.current);
       const newW = nextWord(word);
       setWord(newW);
       setScrambled(scrambleWord(newW));
       setInput("");
-    } else {
-      playGameSound(game, "hit");
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 20);
     }
   };
 
-  useInterval(() => {
-    setTime((value) => {
-      if (value <= 1) {
-        setRunning(false);
-        playGameSound(game, "over");
-        finish({ score: scoreRef.current, level: Math.max(1, Math.floor(scoreRef.current / 180) + 1), duration: 45, detail: "Words solved" });
-        return 0;
+  const submit = (event) => {
+    if (event) event.preventDefault();
+    if (!running) return;
+
+    if (input.trim().toUpperCase() === word) {
+      playGameSound(game, "score");
+      scoreRef.current += 1;
+      setScore(scoreRef.current);
+      const newW = nextWord(word);
+      setWord(newW);
+      setScrambled(scrambleWord(newW));
+      setInput("");
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 20);
+    } else {
+      // Wrong guess triggers immediate game-over
+      setRunning(false);
+      playGameSound(game, "over");
+      finish({ score: scoreRef.current, level: Math.max(1, Math.floor(scoreRef.current / 5) + 1), duration: secondsSince(startTime), detail: "Incorrect guess" });
+    }
+  };
+
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      submit();
+    }
+  };
+
+  const clearInput = () => {
+    if (!running) return;
+    setInput("");
+    textareaRef.current?.focus();
+  };
+
+  const reshuffle = () => {
+    if (!running) return;
+    setScrambled(scrambleWord(word));
+    textareaRef.current?.focus();
+  };
+
+  const usedIndices = useMemo(() => {
+    const scrambledArr = scrambled.split("");
+    const indices = [];
+    for (const char of input.toUpperCase()) {
+      const idx = scrambledArr.findIndex((c, i) => c === char && !indices.includes(i));
+      if (idx !== -1) {
+        indices.push(idx);
       }
-      return value - 1;
-    });
-  }, 1000, running);
+    }
+    return indices;
+  }, [scrambled, input]);
+
+  const handleTileClick = (letter, idx) => {
+    if (!running) return;
+    textareaRef.current?.focus();
+    if (usedIndices.includes(idx)) return;
+
+    if (input.length < word.length) {
+      const nextVal = input + letter;
+      handleInputChange(nextVal);
+    }
+  };
+
+  // Initialize WordGame word
+  useEffect(() => {
+    const initialW = nextWord("");
+    setWord(initialW);
+    setScrambled(scrambleWord(initialW));
+  }, [difficulty]);
 
   return (
-    <GameShell game={game} title="Score" score={score} meta={`${time}s`} controls={game.controls} onStart={restart} running={running}>
-      <form className="word-panel" onSubmit={submit}>
-        <strong>{scrambled || shuffle((word || "").split("")).join("")}</strong>
-        <input value={input} onChange={(event) => setInput(event.target.value)} placeholder="Type answer" />
-        <ArcadeButton type="submit" disabled={!running}>Submit</ArcadeButton>
-      </form>
+    <GameShell game={game} title="Score" score={score} meta="Sudden Death" controls={game.controls} onStart={restart} running={running}>
+      <div className="word-scramble-container">
+        {/* Scrambled letters tiles */}
+        <div className="scrambled-tiles">
+          {(scrambled || word).split("").map((letter, idx) => {
+            const isUsed = usedIndices.includes(idx);
+            return (
+              <button
+                key={idx}
+                type="button"
+                className={`scramble-tile ${isUsed ? "used" : ""}`}
+                onClick={() => handleTileClick(letter, idx)}
+                disabled={!running || isUsed}
+              >
+                {letter}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Blank slot indicators */}
+        <div className="guess-slots">
+          {Array.from({ length: (word || "WORD").length }).map((_, idx) => {
+            const char = input[idx] || "";
+            return (
+              <div
+                key={idx}
+                className={`guess-slot ${char ? "filled" : ""} ${running && idx === input.length ? "active" : ""}`}
+              >
+                {char}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Console-terminal text entry */}
+        <div className="scramble-entry-wrapper">
+          <textarea
+            ref={textareaRef}
+            value={input}
+            onChange={(e) => handleInputChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="scramble-textarea"
+            placeholder={running ? "Type guess here or click tiles..." : "Press START to play"}
+            disabled={!running}
+            rows={2}
+          />
+        </div>
+
+        {/* Actions panel */}
+        <div className="scramble-actions">
+          <ArcadeButton type="button" onClick={reshuffle} disabled={!running} className="action-btn shuffle-btn">
+            Shuffle
+          </ArcadeButton>
+          <ArcadeButton type="button" onClick={clearInput} disabled={!running} className="action-btn clear-btn">
+            Clear
+          </ArcadeButton>
+          <ArcadeButton type="button" onClick={submit} disabled={!running} className="action-btn submit-btn">
+            Submit
+          </ArcadeButton>
+        </div>
+      </div>
     </GameShell>
   );
 }
