@@ -691,19 +691,19 @@ function CanvasBallGame({ game, onFinish, mode, difficulty }) {
         event.preventDefault();
       }
       if (mode === "pong") {
-        // Right paddle moves vertically on ArrowUp / ArrowDown
+        // Left paddle controlled by Left Arrow (UP) and Down Arrow (DOWN)
+        if (event.code === "ArrowLeft" || event.code === "KeyA") {
+          state.current.ai -= 34;
+        }
+        if (event.code === "ArrowDown" || event.code === "KeyS") {
+          state.current.ai += 34;
+        }
+        // Right paddle controlled by Up Arrow (UP) and Right Arrow (DOWN)
         if (event.code === "ArrowUp" || event.code === "KeyW") {
           state.current.paddle -= 34;
         }
-        if (event.code === "ArrowDown" || event.code === "KeyS") {
-          state.current.paddle += 34;
-        }
-        // Left paddle moves vertically on ArrowRight (UP) / ArrowLeft (DOWN)
         if (event.code === "ArrowRight" || event.code === "KeyD") {
-          state.current.ai -= 34;
-        }
-        if (event.code === "ArrowLeft" || event.code === "KeyA") {
-          state.current.ai += 34;
+          state.current.paddle += 34;
         }
       } else {
         // Breakout paddle moves horizontally
