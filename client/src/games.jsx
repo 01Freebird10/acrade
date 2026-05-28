@@ -722,14 +722,12 @@ function CanvasBallGame({ game, onFinish, mode, difficulty }) {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return undefined;
+    if (mode === "pong") return undefined; // Disable mouse paddle override in Pong mode
+
     const move = (event) => {
       const rect = canvas.getBoundingClientRect();
       if (!state.current) return;
-      if (mode === "pong") {
-        state.current.paddle = ((event.clientY - rect.top) / rect.height) * 430 - 46;
-      } else {
-        state.current.paddle = ((event.clientX - rect.left) / rect.width) * 660 - 52;
-      }
+      state.current.paddle = ((event.clientX - rect.left) / rect.width) * 660 - 52;
     };
     canvas.addEventListener("mousemove", move);
     return () => canvas.removeEventListener("mousemove", move);
