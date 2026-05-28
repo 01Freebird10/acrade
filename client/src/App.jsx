@@ -1425,8 +1425,6 @@ function GameOverModal({ gameOverRun, onClose }) {
         ctx.save();
         ctx.globalAlpha = Math.max(0, p.opacity);
         ctx.fillStyle = p.color;
-        ctx.shadowColor = p.color;
-        ctx.shadowBlur = 6;
         ctx.translate(p.x, p.y);
         ctx.rotate(p.rotation);
         ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
@@ -1454,7 +1452,6 @@ function GameOverModal({ gameOverRun, onClose }) {
 
   return (
     <div className={`level-modal-overlay ${isBest ? "new-best-theme" : "game-over-theme"}`}>
-      {isBest && <canvas ref={canvasRef} className="confetti-canvas" style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 100000 }} />}
       <div className={`level-modal-content crt-frame ${isBest ? "gold-border" : "red-border"}`} style={{ zIndex: 100001, position: "relative" }}>
         <div className="crt-glow-overlay" />
         <div className="level-modal-star">{isBest ? "🏆" : "👾"}</div>
@@ -1478,6 +1475,7 @@ function GameOverModal({ gameOverRun, onClose }) {
           {isBest ? "Awesome!" : "Try Again"}
         </button>
       </div>
+      {isBest && <canvas ref={canvasRef} className="confetti-canvas" style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 100005 }} />}
     </div>
   );
 }
