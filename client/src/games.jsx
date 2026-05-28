@@ -691,13 +691,22 @@ function CanvasBallGame({ game, onFinish, mode, difficulty }) {
         event.preventDefault();
       }
       if (mode === "pong") {
-        if (event.code === "ArrowUp" || event.code === "ArrowRight" || event.code === "KeyW" || event.code === "KeyD") {
+        // Right paddle moves vertically on ArrowUp / ArrowDown
+        if (event.code === "ArrowUp" || event.code === "KeyW") {
           state.current.paddle -= 34;
         }
-        if (event.code === "ArrowDown" || event.code === "ArrowLeft" || event.code === "KeyS" || event.code === "KeyA") {
+        if (event.code === "ArrowDown" || event.code === "KeyS") {
           state.current.paddle += 34;
         }
+        // Left paddle moves vertically on ArrowRight (UP) / ArrowLeft (DOWN)
+        if (event.code === "ArrowRight" || event.code === "KeyD") {
+          state.current.ai -= 34;
+        }
+        if (event.code === "ArrowLeft" || event.code === "KeyA") {
+          state.current.ai += 34;
+        }
       } else {
+        // Breakout paddle moves horizontally
         if (event.code === "ArrowLeft" || event.code === "KeyA") {
           state.current.paddle -= 34;
         }
@@ -732,16 +741,34 @@ function CanvasBallGame({ game, onFinish, mode, difficulty }) {
       const ctx = canvas?.getContext("2d");
       if (!ctx || !state.current) return;
       const s = state.current;
-      s.paddle = Math.max(0, Math.min(660 - (s.paddleWidth || 104), s.paddle));
+      
+      // Paddle position constraints based on game mode
+      if (mode === "pong") {
+        s.paddle = Math.max(0, Math.min(430 - 92, s.paddle));
+        s.ai = Math.max(0, Math.min(430 - 92, s.ai));
+      } else {
+        s.paddle = Math.max(0, Math.min(660 - (s.paddleWidth || 104), s.paddle));
+      }
+
       s.ball.x += s.ball.vx;
       s.ball.y += s.ball.vy;
-      if (s.ball.x < 8 || s.ball.x > 652) {
-        s.ball.vx *= -1;
-        shakeRef.current = { duration: 5, magnitude: 2.5 };
-      }
-      if (s.ball.y < 8) {
-        s.ball.vy *= -1;
-        shakeRef.current = { duration: 5, magnitude: 2.5 };
+
+      // Ball wall bounces based on game mode
+      if (mode === "breakout") {
+        if (s.ball.x < 8 || s.ball.x > 652) {
+          s.ball.vx *= -1;
+          shakeRef.current = { duration: 5, magnitude: 2.5 };
+        }
+        if (s.ball.y < 8) {
+          s.ball.vy *= -1;
+          shakeRef.current = { duration: 5, magnitude: 2.5 };
+        }
+      } else {
+        // Pong mode vertical wall boundaries (bounces off top and bottom walls)
+        if (s.ball.y < 8 || s.ball.y > 422) {
+          s.ball.vy *= -1;
+          shakeRef.current = { duration: 5, magnitude: 2.5 };
+        }
       }
 
       particlesRef.current.push({
@@ -756,8 +783,7 @@ function CanvasBallGame({ game, onFinish, mode, difficulty }) {
       });
 
       if (mode === "pong") {
-        const aiCoeff = difficulty === "easy" ? 0.05 : difficulty === "hard" ? 0.13 : 0.085;
-        s.ai += (s.ball.y - s.ai - 40) * aiCoeff;
+        // Player controlled left paddle collision
         if (s.ball.x < 35 && s.ball.y > s.ai && s.ball.y < s.ai + 92) {
           s.ball.vx = Math.abs(s.ball.vx) + 0.2;
           playGameSound(game, "hit");
@@ -777,6 +803,7 @@ function CanvasBallGame({ game, onFinish, mode, difficulty }) {
             });
           }
         }
+        // Player controlled right paddle collision
         if (s.ball.x > 582 && s.ball.y > s.paddle && s.ball.y < s.paddle + 92) {
           s.ball.vx = -Math.abs(s.ball.vx) - 0.2;
           playGameSound(game, "hit");
@@ -796,7 +823,8 @@ function CanvasBallGame({ game, onFinish, mode, difficulty }) {
             });
           }
         }
-        if (s.ball.x < -20 || s.ball.x > 690) loseLife();
+        // If ball crosses left or right brick line, game ends instantly
+        if (s.ball.x < 12 || s.ball.x > 648) loseLife();
       } else {
         if (s.ball.y > 372 && s.ball.x > s.paddle && s.ball.x < s.paddle + (s.paddleWidth || 104)) {
           s.ball.vy = -Math.abs(s.ball.vy) - 0.12;
@@ -845,7 +873,7 @@ function CanvasBallGame({ game, onFinish, mode, difficulty }) {
   function loseLife() {
     shakeRef.current = { duration: 25, magnitude: 9 };
     setLives((value) => {
-      const next = value - 1;
+      const next = mode === "pong" ? 0 : value - 1;
       if (next <= 0) {
         setRunning(false);
         playGameSound(game, "over");
