@@ -687,20 +687,28 @@ function CanvasBallGame({ game, onFinish, mode, difficulty }) {
   useEffect(() => {
     const handler = (event) => {
       if (!state.current) return;
-      if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.code)) {
+      if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "KeyW", "KeyS", "KeyA", "KeyD"].includes(event.code)) {
         event.preventDefault();
       }
       if (mode === "pong") {
-        if (event.code === "ArrowUp") state.current.paddle -= 34;
-        if (event.code === "ArrowDown") state.current.paddle += 34;
+        if (event.code === "ArrowUp" || event.code === "ArrowRight" || event.code === "KeyW" || event.code === "KeyD") {
+          state.current.paddle -= 34;
+        }
+        if (event.code === "ArrowDown" || event.code === "ArrowLeft" || event.code === "KeyS" || event.code === "KeyA") {
+          state.current.paddle += 34;
+        }
       } else {
-        if (event.code === "ArrowLeft") state.current.paddle -= 34;
-        if (event.code === "ArrowRight") state.current.paddle += 34;
+        if (event.code === "ArrowLeft" || event.code === "KeyA") {
+          state.current.paddle -= 34;
+        }
+        if (event.code === "ArrowRight" || event.code === "KeyD") {
+          state.current.paddle += 34;
+        }
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, []);
+  }, [mode]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -716,7 +724,7 @@ function CanvasBallGame({ game, onFinish, mode, difficulty }) {
     };
     canvas.addEventListener("mousemove", move);
     return () => canvas.removeEventListener("mousemove", move);
-  }, []);
+  }, [mode]);
 
   useInterval(
     () => {
@@ -1552,8 +1560,12 @@ function RacingGame({ game, onFinish, difficulty }) {
         return;
       }
       s.ticks += 1;
-      if (s.ticks % 32 === 0) s.cars.push({ lane: Math.floor(Math.random() * 3), y: -60 });
-      s.cars.forEach((car) => (car.y += 6 + scoreRef.current / 260));
+      const spawnRate = difficulty === "easy" ? 44 : difficulty === "hard" ? 22 : 32;
+      const baseSpeed = difficulty === "easy" ? 4.0 : difficulty === "hard" ? 9.5 : 6.5;
+      const speedScale = difficulty === "easy" ? 400 : difficulty === "hard" ? 150 : 260;
+
+      if (s.ticks % spawnRate === 0) s.cars.push({ lane: Math.floor(Math.random() * 3), y: -60 });
+      s.cars.forEach((car) => (car.y += baseSpeed + scoreRef.current / speedScale));
 
       const laneX = (lane) => lane * 220 + 88;
       particlesRef.current.push({

@@ -171,6 +171,7 @@ export default function App() {
   const [personalRecords, setPersonalRecords] = useState(readSavedRecords);
   const [difficulty, setDifficulty] = useState("medium");
   const [levelUp, setLevelUp] = useState(null);
+  const [gameOverRun, setGameOverRun] = useState(null);
   const [posting, setPosting] = useState(false);
   const [apiMode, setApiMode] = useState("checking");
   const userLoadedRef = useRef(false);
@@ -405,6 +406,7 @@ export default function App() {
     setSelectedGame(game);
     setLastRun(null);
     setLevelUp(null);
+    setGameOverRun(null);
     setView("play");
     loadScores(game.id);
     soundFor("open", GAMES.findIndex((item) => item.id === game.id));
@@ -576,6 +578,14 @@ export default function App() {
       }
 
       setLastRun({ ...run, status: "posted", isNewBest, detail: isNewBest ? `🏆 NEW HIGH SCORE: ${scoreVal}! ✨ Great run!` : `🎮 Run complete! Score: ${scoreVal}` });
+      setGameOverRun({
+        id: `${selectedGame.id}-${Date.now()}`,
+        gameId: selectedGame.id,
+        gameName: selectedGame.name,
+        difficulty,
+        score: scoreVal,
+        isNewBest
+      });
       await loadScores(selectedGame.id);
       await loadLeaderboard(boardGameId);
     } catch (error) {
@@ -695,31 +705,8 @@ export default function App() {
           setGameDiffFilter={setGameDiffFilter}
         />
       )}
-      {levelUp && (
-        <div className="level-modal-overlay">
-          <div className="level-modal-content">
-            <div className="level-modal-star">🏆</div>
-            <h2>NEW HIGH SCORE!</h2>
-            <p>You set a new personal record in the Arcade!</p>
-            <div className="level-modal-stats">
-              <div className="level-modal-stat-card">
-                <span>Game</span>
-                <strong>{levelUp.gameName}</strong>
-              </div>
-              <div className="level-modal-stat-card yellow">
-                <span>Difficulty</span>
-                <strong>{String(levelUp.difficulty).toUpperCase()}</strong>
-              </div>
-              <div className="level-modal-stat-card green">
-                <span>Record Score</span>
-                <strong>{levelUp.score}</strong>
-              </div>
-            </div>
-            <button type="button" className="primary-button level-modal-action" onClick={() => setLevelUp(null)}>
-              Awesome!
-            </button>
-          </div>
-        </div>
+      {gameOverRun && (
+        <GameOverModal gameOverRun={gameOverRun} onClose={() => setGameOverRun(null)} />
       )}
     </main>
   );
@@ -1375,6 +1362,122 @@ function LevelUpBanner({ levelUp }) {
       <span className="spark spark-a">✨</span>
       <span className="spark spark-b">✨</span>
       <span className="spark spark-c">✨</span>
+    </div>
+  );
+}
+
+function GameOverModal({ gameOverRun, onClose }) {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    if (!gameOverRun || !gameOverRun.isNewBest) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let animationFrameId;
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+
+    const particles = [];
+    const colors = ["#2ff6d0", "#ff4ad8", "#ffcc4d", "#70ff7a", "#60a5fa", "#ff4a67", "#ffffff"];
+
+    const handleResize = () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    };
+    window.addEventListener("resize", handleResize);
+
+    const spawnPopper = (x, angle) => {
+      for (let i = 0; i < 60; i++) {
+        const theta = angle + (Math.random() - 0.5) * 0.45;
+        const velocity = Math.random() * 12 + 10;
+        particles.push({
+          x,
+          y: height,
+          vx: Math.cos(theta) * velocity,
+          vy: Math.sin(theta) * velocity,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          size: Math.random() * 6 + 4,
+          opacity: 1,
+          decay: Math.random() * 0.015 + 0.008,
+          gravity: 0.28,
+          rotation: Math.random() * Math.PI * 2,
+          rotationSpeed: (Math.random() - 0.5) * 0.2
+        });
+      }
+    };
+
+    spawnPopper(0, -Math.PI / 4);
+    spawnPopper(width, -3 * Math.PI / 4);
+
+    const loop = () => {
+      ctx.clearRect(0, 0, width, height);
+
+      particles.forEach((p) => {
+        p.vy += p.gravity;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.opacity -= p.decay;
+        p.rotation += p.rotationSpeed;
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.opacity);
+        ctx.fillStyle = p.color;
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = 6;
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation);
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+        ctx.restore();
+      });
+
+      const alive = particles.filter((p) => p.opacity > 0 && p.y <= height);
+      particles.length = 0;
+      particles.push(...alive);
+
+      if (alive.length > 0) {
+        animationFrameId = requestAnimationFrame(loop);
+      }
+    };
+
+    loop();
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [gameOverRun]);
+
+  const isBest = gameOverRun?.isNewBest;
+
+  return (
+    <div className={`level-modal-overlay ${isBest ? "new-best-theme" : "game-over-theme"}`}>
+      {isBest && <canvas ref={canvasRef} className="confetti-canvas" style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 100000 }} />}
+      <div className={`level-modal-content crt-frame ${isBest ? "gold-border" : "red-border"}`} style={{ zIndex: 100001, position: "relative" }}>
+        <div className="crt-glow-overlay" />
+        <div className="level-modal-star">{isBest ? "🏆" : "👾"}</div>
+        <h2>{isBest ? "CONGRATS! NEW HIGH SCORE!" : "GAME OVER"}</h2>
+        <p>{isBest ? "✨ Incredible run! You set a new personal record! ✨" : "🎮 Run complete! Keep practicing to climb the ranks! 🎮"}</p>
+        <div className="level-modal-stats">
+          <div className="level-modal-stat-card">
+            <span>Game</span>
+            <strong>{gameOverRun?.gameName}</strong>
+          </div>
+          <div className="level-modal-stat-card yellow">
+            <span>Difficulty</span>
+            <strong>{String(gameOverRun?.difficulty || "medium").toUpperCase()}</strong>
+          </div>
+          <div className="level-modal-stat-card green">
+            <span>{isBest ? "New Record" : "Final Score"}</span>
+            <strong>{gameOverRun?.score}</strong>
+          </div>
+        </div>
+        <button type="button" className={`primary-button level-modal-action ${isBest ? "gold-glow" : "red-glow"}`} onClick={onClose}>
+          {isBest ? "Awesome!" : "Try Again"}
+        </button>
+      </div>
     </div>
   );
 }

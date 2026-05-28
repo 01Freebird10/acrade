@@ -2532,3 +2532,72 @@ select:focus {
   color: var(--cyan);
   font-weight: 900;
 }
+
+/* Game Over and Congrats Best Modals */
+.game-over-theme {
+  background: rgba(5, 7, 12, 0.94) !important;
+}
+
+.new-best-theme {
+  background: rgba(10, 8, 4, 0.93) !important;
+}
+
+.level-modal-content.gold-border {
+  border: 2px solid #ffcc4d !important;
+  box-shadow: 0 0 60px rgba(255, 204, 77, 0.45), inset 0 0 40px rgba(255, 204, 77, 0.2) !important;
+}
+
+.level-modal-content.red-border {
+  border: 2px solid #ff4a67 !important;
+  box-shadow: 0 0 60px rgba(255, 74, 103, 0.45), inset 0 0 40px rgba(255, 74, 103, 0.2) !important;
+}
+
+.level-modal-content.red-border .level-modal-star {
+  background: linear-gradient(135deg, #ff4a67, #b3102b);
+  box-shadow: 0 0 35px rgba(255, 74, 103, 0.5);
+  animation: level-star-bounce 2s ease-in-out infinite;
+}
+
+.level-modal-content.red-border h2 {
+  text-shadow: 0 0 15px rgba(255, 74, 103, 0.4);
+}
+
+.level-modal-content.red-border .level-modal-stat-card strong {
+  color: #ff4a67;
+}
+
+.primary-button.level-modal-action.gold-glow {
+  background: linear-gradient(135deg, var(--yellow), #f97316);
+  border: none;
+  box-shadow: 0 0 20px rgba(255, 204, 77, 0.4);
+  color: #070d18;
+  font-weight: 1000;
+  text-transform: uppercase;
+}
+
+.primary-button.level-modal-action.gold-glow:hover {
+  box-shadow: 0 0 30px rgba(255, 204, 77, 0.65);
+}
+
+.primary-button.level-modal-action.red-glow {
+  background: linear-gradient(135deg, #ff4a67, #b3102b);
+  border: none;
+  box-shadow: 0 0 20px rgba(255, 74, 103, 0.4);
+  color: #ffffff;
+  font-weight: 1000;
+  text-transform: uppercase;
+}
+
+.primary-button.level-modal-action.red-glow:hover {
+  box-shadow: 0 0 30px rgba(255, 74, 103, 0.65);
+}
+
+.confetti-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 100000;
+}
+
