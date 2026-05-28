@@ -423,13 +423,14 @@ function GameShell({ game, title, score, meta, children, controls, onStart, runn
   );
 }
 
-function SnakeGame({ game, onFinish }) {
+function SnakeGame({ game, onFinish, difficulty }) {
   const finish = useFinish(onFinish);
   const [running, setRunning] = useState(false);
   const [snake, setSnake] = useState([{ x: 7, y: 8 }, { x: 6, y: 8 }, { x: 5, y: 8 }, { x: 4, y: 8 }]);
   const [food, setFood] = useState({ x: 11, y: 8 });
   const [dir, setDir] = useState({ x: 1, y: 0 });
   const [score, setScore] = useState(0);
+  const scoreRef = useRef(0);
   const startTime = useRef(Date.now());
 
   const restart = () => {
@@ -437,6 +438,7 @@ function SnakeGame({ game, onFinish }) {
     setSnake([{ x: 7, y: 8 }, { x: 6, y: 8 }, { x: 5, y: 8 }, { x: 4, y: 8 }]);
     setFood({ x: 11, y: 8 });
     setDir({ x: 1, y: 0 });
+    scoreRef.current = 0;
     setScore(0);
     setRunning(true);
   };
@@ -477,7 +479,7 @@ function SnakeGame({ game, onFinish }) {
         if (collision) {
           window.setTimeout(() => {
             setRunning(false);
-            finish({ score, duration: secondsSince(startTime), detail: "Collision detected" });
+            finish({ score: scoreRef.current, duration: secondsSince(startTime), detail: "Collision detected" });
           }, 0);
           return current;
         }
@@ -489,7 +491,8 @@ function SnakeGame({ game, onFinish }) {
           const blocked = new Set(nextSnake.map(keyOf));
           setFood(randomCell(blocked));
           playGameSound(game, "eat");
-          setScore((value) => value + 15);
+          scoreRef.current += 15;
+          setScore(scoreRef.current);
         }
         return nextSnake;
       });
@@ -514,7 +517,7 @@ function SnakeGame({ game, onFinish }) {
   );
 }
 
-function TetrisGame({ game, onFinish }) {
+function TetrisGame({ game, onFinish, difficulty }) {
   const finish = useFinish(onFinish);
   const pieces = useMemo(
     () => [
@@ -531,6 +534,7 @@ function TetrisGame({ game, onFinish }) {
   const [piece, setPiece] = useState(() => ({ shape: pieces[0], x: 3, y: 0 }));
   const [running, setRunning] = useState(false);
   const [score, setScore] = useState(0);
+  const scoreRef = useRef(0);
   const startTime = useRef(Date.now());
 
   const spawn = useCallback(() => ({ shape: pieces[Math.floor(Math.random() * pieces.length)], x: 3, y: 0 }), [pieces]);
@@ -538,6 +542,7 @@ function TetrisGame({ game, onFinish }) {
     startTime.current = Date.now();
     setGrid(emptyTetris());
     setPiece(spawn());
+    scoreRef.current = 0;
     setScore(0);
     setRunning(true);
   };
@@ -568,13 +573,14 @@ function TetrisGame({ game, onFinish }) {
     if (cleared) {
       playGameSound(game, "score");
     }
-    setScore((value) => value + cleared * 120 + 8);
+    scoreRef.current += cleared * 120 + 8;
+    setScore(scoreRef.current);
     if (tetrisCollides(nextGrid, nextPiece)) {
       setRunning(false);
       playGameSound(game, "over");
-      finish({ score: score + cleared * 120, duration: secondsSince(startTime), detail: "Rows cleared" });
+      finish({ score: scoreRef.current, duration: secondsSince(startTime), detail: "Rows cleared" });
     }
-  }, [finish, game, grid, piece, score, spawn]);
+  }, [finish, game, grid, piece, spawn]);
 
   const tetrisSpeed = difficulty === "easy" ? Math.max(220, 800 - score / 3) :
                        difficulty === "hard" ? Math.max(80, 400 - score) :
@@ -638,12 +644,12 @@ function drawTetris(grid, piece) {
   return display;
 }
 
-function PongGame({ game, onFinish }) {
-  return <CanvasBallGame game={game} onFinish={onFinish} mode="pong" />;
+function PongGame({ game, onFinish, difficulty }) {
+  return <CanvasBallGame game={game} onFinish={onFinish} mode="pong" difficulty={difficulty} />;
 }
 
-function BreakoutGame({ game, onFinish }) {
-  return <CanvasBallGame game={game} onFinish={onFinish} mode="breakout" />;
+function BreakoutGame({ game, onFinish, difficulty }) {
+  return <CanvasBallGame game={game} onFinish={onFinish} mode="breakout" difficulty={difficulty} />;
 }
 
 function CanvasBallGame({ game, onFinish, mode, difficulty }) {
@@ -652,6 +658,7 @@ function CanvasBallGame({ game, onFinish, mode, difficulty }) {
   const state = useRef(null);
   const [running, setRunning] = useState(false);
   const [score, setScore] = useState(0);
+  const scoreRef = useRef(0);
   const [lives, setLives] = useState(3);
   const startTime = useRef(Date.now());
 
@@ -671,6 +678,7 @@ function CanvasBallGame({ game, onFinish, mode, difficulty }) {
     };
     particlesRef.current = [];
     shakeRef.current = { duration: 0, magnitude: 0 };
+    scoreRef.current = 0;
     setScore(0);
     setLives(3);
     setRunning(true);
@@ -745,7 +753,8 @@ function CanvasBallGame({ game, onFinish, mode, difficulty }) {
         if (s.ball.x < 35 && s.ball.y > s.ai && s.ball.y < s.ai + 92) {
           s.ball.vx = Math.abs(s.ball.vx) + 0.2;
           playGameSound(game, "hit");
-          setScore((value) => value + 10);
+          scoreRef.current += 10;
+          setScore(scoreRef.current);
           shakeRef.current = { duration: 6, magnitude: 3 };
           for (let i = 0; i < 8; i++) {
             particlesRef.current.push({
@@ -763,7 +772,8 @@ function CanvasBallGame({ game, onFinish, mode, difficulty }) {
         if (s.ball.x > 582 && s.ball.y > s.paddle && s.ball.y < s.paddle + 92) {
           s.ball.vx = -Math.abs(s.ball.vx) - 0.2;
           playGameSound(game, "hit");
-          setScore((value) => value + 10);
+          scoreRef.current += 10;
+          setScore(scoreRef.current);
           shakeRef.current = { duration: 6, magnitude: 3 };
           for (let i = 0; i < 8; i++) {
             particlesRef.current.push({
@@ -783,7 +793,8 @@ function CanvasBallGame({ game, onFinish, mode, difficulty }) {
         if (s.ball.y > 372 && s.ball.x > s.paddle && s.ball.x < s.paddle + (s.paddleWidth || 104)) {
           s.ball.vy = -Math.abs(s.ball.vy) - 0.12;
           playGameSound(game, "hit");
-          setScore((value) => value + 5);
+          scoreRef.current += 5;
+          setScore(scoreRef.current);
           shakeRef.current = { duration: 6, magnitude: 3 };
           for (let i = 0; i < 8; i++) {
             particlesRef.current.push({
@@ -803,7 +814,8 @@ function CanvasBallGame({ game, onFinish, mode, difficulty }) {
             brick.alive = false;
             s.ball.vy *= -1;
             playGameSound(game, "score");
-            setScore((value) => value + 25);
+            scoreRef.current += 25;
+            setScore(scoreRef.current);
             shakeRef.current = { duration: 10, magnitude: 5.5 };
             createNeonExplosion(particlesRef.current, brick.x + 29, brick.y + 9, [game.colors[1], "#ffffff"], 14);
           }
@@ -811,7 +823,7 @@ function CanvasBallGame({ game, onFinish, mode, difficulty }) {
         if (s.bricks.every((brick) => !brick.alive)) {
           setRunning(false);
           playGameSound(game, "score");
-          finish({ score: score + 400, level: 4, duration: secondsSince(startTime), detail: "Board cleared" });
+          finish({ score: scoreRef.current + 400, level: 4, duration: secondsSince(startTime), detail: "Board cleared" });
         }
         if (s.ball.y > 430) loseLife();
       }
@@ -829,7 +841,7 @@ function CanvasBallGame({ game, onFinish, mode, difficulty }) {
       if (next <= 0) {
         setRunning(false);
         playGameSound(game, "over");
-        finish({ score, level: Math.max(1, Math.floor(score / 120) + 1), duration: secondsSince(startTime), detail: mode === "pong" ? "Rally ended" : "Bricks broken" });
+        finish({ score: scoreRef.current, level: Math.max(1, Math.floor(scoreRef.current / 120) + 1), duration: secondsSince(startTime), detail: mode === "pong" ? "Rally ended" : "Bricks broken" });
       }
       return next;
     });
@@ -901,6 +913,7 @@ function ShooterGame({ game, onFinish, difficulty }) {
   const state = useRef(null);
   const [running, setRunning] = useState(false);
   const [score, setScore] = useState(0);
+  const scoreRef = useRef(0);
   const startTime = useRef(Date.now());
 
   const start = () => {
@@ -908,6 +921,7 @@ function ShooterGame({ game, onFinish, difficulty }) {
     state.current = { player: 330, bullets: [], enemies: [], ticks: 0 };
     particlesRef.current = [];
     shakeRef.current = { duration: 0, magnitude: 0 };
+    scoreRef.current = 0;
     setScore(0);
     setRunning(true);
   };
@@ -936,7 +950,7 @@ function ShooterGame({ game, onFinish, difficulty }) {
       }
       s.player = Math.max(10, Math.min(620, s.player));
       const spawnRate = difficulty === "easy" ? 38 : difficulty === "hard" ? 16 : 26;
-      const enemySpeed = difficulty === "easy" ? (1.5 + score / 240) : difficulty === "hard" ? (3.5 + score / 120) : (2.2 + score / 180);
+      const enemySpeed = difficulty === "easy" ? (1.5 + scoreRef.current / 240) : difficulty === "hard" ? (3.5 + scoreRef.current / 120) : (2.2 + scoreRef.current / 180);
       if (s.ticks % spawnRate === 0) s.enemies.push({ x: Math.random() * 620 + 10, y: -20, vy: enemySpeed });
       s.bullets.forEach((b) => (b.y -= 9));
       s.enemies.forEach((e) => (e.y += e.vy));
@@ -959,7 +973,8 @@ function ShooterGame({ game, onFinish, difficulty }) {
             e.hit = true;
             b.hit = true;
             playGameSound(game, "score");
-            setScore((value) => value + 20);
+            scoreRef.current += 20;
+            setScore(scoreRef.current);
             createNeonExplosion(particlesRef.current, e.x, e.y, ["#ff4a67", "#ffffff", game.colors[1]], 12);
             shakeRef.current = { duration: 8, magnitude: 4.5 };
           }
@@ -972,7 +987,7 @@ function ShooterGame({ game, onFinish, difficulty }) {
         playGameSound(game, "over");
         createNeonExplosion(particlesRef.current, s.player + 18, 375, [game.colors[1], "#ffffff", "#ff4a67"], 26);
         shakeRef.current = { duration: 25, magnitude: 11 };
-        finish({ score, level: Math.max(1, Math.floor(score / 160) + 1), duration: secondsSince(startTime), detail: "Drone wave" });
+        finish({ score: scoreRef.current, level: Math.max(1, Math.floor(scoreRef.current / 160) + 1), duration: secondsSince(startTime), detail: "Drone wave" });
       }
       drawShooter(ctx, s, game, canvas, shakeRef.current, particlesRef.current);
     },
@@ -1052,6 +1067,7 @@ function FlappyGame({ game, onFinish, difficulty }) {
   const state = useRef(null);
   const [running, setRunning] = useState(false);
   const [score, setScore] = useState(0);
+  const scoreRef = useRef(0);
   const startTime = useRef(Date.now());
   const particlesRef = useRef([]);
   const shakeRef = useRef({ duration: 0, magnitude: 0 });
@@ -1061,6 +1077,7 @@ function FlappyGame({ game, onFinish, difficulty }) {
     state.current = { y: 180, vy: 0, pipes: [{ x: 680, gap: 190 }], ticks: 0 };
     particlesRef.current = [];
     shakeRef.current = { duration: 0, magnitude: 0 };
+    scoreRef.current = 0;
     setScore(0);
     setRunning(true);
   };
@@ -1089,7 +1106,7 @@ function FlappyGame({ game, onFinish, difficulty }) {
         if (Math.random() < 0.04 && particlesRef.current.length < 60) {
           createNeonExplosion(particlesRef.current, Math.random() * 660, Math.random() * 200 + 40, ["#2ff6d0", "#ff4ad8", "#ffcc4d", "#70ff7a", "#60a5fa"], 12);
         }
-        drawShooter(ctx, s, game, canvas, shakeRef.current, particlesRef.current);
+        drawFlappy(ctx, s, game, canvas, shakeRef.current, particlesRef.current);
         return;
       }
       s.ticks += 1;
@@ -1116,7 +1133,8 @@ function FlappyGame({ game, onFinish, difficulty }) {
         if (!p.passed && p.x < 90) {
           p.passed = true;
           playGameSound(game, "score");
-          setScore((value) => value + 25);
+          scoreRef.current += 25;
+          setScore(scoreRef.current);
         }
       });
       s.pipes = s.pipes.filter((p) => p.x > -80);
@@ -1127,7 +1145,7 @@ function FlappyGame({ game, onFinish, difficulty }) {
         playGameSound(game, "over");
         createNeonExplosion(particlesRef.current, 90, s.y, [game.colors[1], "#ffffff"], 16);
         shakeRef.current = { duration: 25, magnitude: 9 };
-        finish({ score, level: Math.max(1, Math.floor(score / 100) + 1), duration: secondsSince(startTime), detail: "Gates passed" });
+        finish({ score: scoreRef.current, level: Math.max(1, Math.floor(scoreRef.current / 100) + 1), duration: secondsSince(startTime), detail: "Gates passed" });
       }
       drawFlappy(ctx, s, game, canvas, shakeRef.current, particlesRef.current);
     },
@@ -1210,12 +1228,14 @@ function MemoryGame({ game, onFinish, difficulty }) {
   const [cards, setCards] = useState(() => shuffle([...Array(pairCount).keys(), ...Array(pairCount).keys()]).map((value, id) => ({ id, value, open: false, done: false })));
   const [choice, setChoice] = useState([]);
   const [moves, setMoves] = useState(0);
+  const movesRef = useRef(0);
   const startTime = useRef(Date.now());
 
   const restart = () => {
     startTime.current = Date.now();
     setCards(shuffle([...Array(pairCount).keys(), ...Array(pairCount).keys()]).map((value, id) => ({ id, value, open: false, done: false })));
     setChoice([]);
+    movesRef.current = 0;
     setMoves(0);
   };
 
@@ -1226,7 +1246,8 @@ function MemoryGame({ game, onFinish, difficulty }) {
     setCards((current) => current.map((item) => (item.id === card.id ? { ...item, open: true } : item)));
     setChoice(nextChoice);
     if (nextChoice.length === 2) {
-      setMoves((value) => value + 1);
+      movesRef.current += 1;
+      setMoves(movesRef.current);
       window.setTimeout(() => {
         setCards((current) => {
           const match = nextChoice[0].value === nextChoice[1].value;
@@ -1237,7 +1258,7 @@ function MemoryGame({ game, onFinish, difficulty }) {
           }
           const next = current.map((item) => (nextChoice.some((c) => c.id === item.id) ? { ...item, open: match, done: match } : item));
           if (next.every((item) => item.done)) {
-            const score = Math.max(50, 600 - moves * 18 - secondsSince(startTime) * 2);
+            const score = Math.max(50, 600 - movesRef.current * 18 - secondsSince(startTime) * 2);
             playGameSound(game, "score");
             finish({ score, level: 3, duration: secondsSince(startTime), detail: "Matched all cards" });
           }
@@ -1261,15 +1282,17 @@ function MemoryGame({ game, onFinish, difficulty }) {
   );
 }
 
-function Twenty48Game({ game, onFinish }) {
+function Twenty48Game({ game, onFinish, difficulty }) {
   const finish = useFinish(onFinish);
   const [grid, setGrid] = useState(() => addTile(addTile(empty2048())));
   const [score, setScore] = useState(0);
+  const scoreRef = useRef(0);
   const startTime = useRef(Date.now());
 
   const restart = () => {
     startTime.current = Date.now();
     setGrid(addTile(addTile(empty2048())));
+    scoreRef.current = 0;
     setScore(0);
   };
 
@@ -1280,13 +1303,14 @@ function Twenty48Game({ game, onFinish }) {
       playGameSound(game, gained ? "score" : "tap");
       const next = addTile(moved);
       setGrid(next);
-      setScore((value) => value + gained);
+      scoreRef.current += gained;
+      setScore(scoreRef.current);
       if (!canMove2048(next)) {
         playGameSound(game, "over");
-        finish({ score: score + gained, level: Math.max(1, Math.floor(Math.log2(Math.max(...next.flat()))) - 7), duration: secondsSince(startTime), detail: "Tile merge" });
+        finish({ score: scoreRef.current, level: Math.max(1, Math.floor(Math.log2(Math.max(...next.flat()))) - 7), duration: secondsSince(startTime), detail: "Tile merge" });
       }
     },
-    [finish, grid, score]
+    [finish, grid]
   );
 
   useEffect(() => {
@@ -1308,7 +1332,7 @@ function Twenty48Game({ game, onFinish }) {
       <div className="move-row">
         {["left", "up", "down", "right"].map((dir) => <ArcadeButton key={dir} onClick={() => playMove(dir)}>{dir}</ArcadeButton>)}
       </div>
-      <ArcadeButton onClick={() => finish({ score, duration: secondsSince(startTime), detail: "Manual finish" })}>Submit run</ArcadeButton>
+      <ArcadeButton onClick={() => finish({ score: scoreRef.current, duration: secondsSince(startTime), detail: "Manual finish" })}>Submit run</ArcadeButton>
     </GameShell>
   );
 }
@@ -1318,33 +1342,45 @@ function MinesGame({ game, onFinish, difficulty }) {
   const mineCount = difficulty === "easy" ? 6 : difficulty === "hard" ? 18 : 10;
   const [board, setBoard] = useState(() => makeMines(mineCount));
   const [status, setStatus] = useState("Find safe nodes");
+  const [score, setScore] = useState(0);
+  const scoreRef = useRef(0);
   const startTime = useRef(Date.now());
 
   const restart = () => {
     startTime.current = Date.now();
     setBoard(makeMines(mineCount));
     setStatus("Find safe nodes");
+    scoreRef.current = 0;
+    setScore(0);
   };
 
   const reveal = (index) => {
-    setBoard((current) => {
-      if (current[index].open) return current;
-      playGameSound(game, current[index].mine ? "over" : "tap");
-      const next = current.map((cell, i) => (i === index ? { ...cell, open: true } : cell));
-      if (next[index].mine) {
-        setStatus("Mine triggered");
-        finish({ score: next.filter((cell) => cell.open && !cell.mine).length * 10, level: 1, duration: secondsSince(startTime), detail: "Mine triggered" });
-      } else if (next.filter((cell) => !cell.mine && !cell.open).length === 0) {
-        setStatus("Field clear");
-        playGameSound(game, "score");
-        finish({ score: 900 - secondsSince(startTime) * 5, level: 4, duration: secondsSince(startTime), detail: "Field clear" });
-      }
-      return next;
-    });
+    if (board[index].open) return;
+    playGameSound(game, board[index].mine ? "over" : "tap");
+    const next = board.map((cell, i) => (i === index ? { ...cell, open: true } : cell));
+    setBoard(next);
+    if (next[index].mine) {
+      setStatus("Mine triggered");
+      const finalScore = next.filter((cell) => cell.open && !cell.mine).length * 10;
+      scoreRef.current = finalScore;
+      setScore(finalScore);
+      finish({ score: finalScore, level: 1, duration: secondsSince(startTime), detail: "Mine triggered" });
+    } else if (next.filter((cell) => !cell.mine && !cell.open).length === 0) {
+      setStatus("Field clear");
+      playGameSound(game, "score");
+      const finalScore = Math.max(50, 900 - secondsSince(startTime) * 5);
+      scoreRef.current = finalScore;
+      setScore(finalScore);
+      finish({ score: finalScore, level: 4, duration: secondsSince(startTime), detail: "Field clear" });
+    } else {
+      const currentScore = next.filter((cell) => cell.open && !cell.mine).length * 10;
+      scoreRef.current = currentScore;
+      setScore(currentScore);
+    }
   };
 
   return (
-    <GameShell game={game} title="Safe" score={board.filter((cell) => cell.open && !cell.mine).length} meta={status} controls={game.controls} onStart={restart} running={false}>
+    <GameShell game={game} title="Safe" score={score} meta={status} controls={game.controls} onStart={restart} running={false}>
       <div className="mine-grid">
         {board.map((cell, index) => (
           <button key={index} type="button" className={`mine-cell ${cell.open ? "open" : ""} ${cell.open && cell.mine ? "mine" : ""}`} onClick={() => reveal(index)}>
@@ -1367,6 +1403,7 @@ function MazeGame({ game, onFinish, difficulty }) {
   const [dots, setDots] = useState(() => Array.from({ length: 32 }, () => randomCell(new Set(["1:1"]), 12)));
   const [running, setRunning] = useState(false);
   const [score, setScore] = useState(0);
+  const scoreRef = useRef(0);
   const startTime = useRef(Date.now());
   useKeys(keys);
 
@@ -1375,31 +1412,28 @@ function MazeGame({ game, onFinish, difficulty }) {
     setPlayer({ x: 1, y: 1 });
     setBots(botList);
     setDots(Array.from({ length: 32 }, () => randomCell(new Set(["1:1"]), 12)));
+    scoreRef.current = 0;
     setScore(0);
     setRunning(true);
   };
 
   useInterval(
     () => {
-      setPlayer((current) => {
-        const next = { ...current };
-        if (keys.current.has("ArrowLeft") || keys.current.has("KeyA")) next.x -= 1;
-        if (keys.current.has("ArrowRight") || keys.current.has("KeyD")) next.x += 1;
-        if (keys.current.has("ArrowUp") || keys.current.has("KeyW")) next.y -= 1;
-        if (keys.current.has("ArrowDown") || keys.current.has("KeyS")) next.y += 1;
-        next.x = Math.max(0, Math.min(11, next.x));
-        next.y = Math.max(0, Math.min(11, next.y));
-        return next;
-      });
-      setBots((current) => current.map((bot) => {
-        const chaseRate = difficulty === "easy" ? 0.35 : difficulty === "hard" ? 0.8 : 0.6;
-        const shouldChase = Math.random() < chaseRate;
+      let nextPlayer = { ...player };
+      if (keys.current.has("ArrowLeft") || keys.current.has("KeyA")) nextPlayer.x -= 1;
+      if (keys.current.has("ArrowRight") || keys.current.has("KeyD")) nextPlayer.x += 1;
+      if (keys.current.has("ArrowUp") || keys.current.has("KeyW")) nextPlayer.y -= 1;
+      if (keys.current.has("ArrowDown") || keys.current.has("KeyS")) nextPlayer.y += 1;
+      nextPlayer.x = Math.max(0, Math.min(11, nextPlayer.x));
+      nextPlayer.y = Math.max(0, Math.min(11, nextPlayer.y));
 
+      const chaseRate = difficulty === "easy" ? 0.35 : difficulty === "hard" ? 0.8 : 0.6;
+      const nextBots = bots.map((bot) => {
+        const shouldChase = Math.random() < chaseRate;
         if (shouldChase) {
-          const dx = player.x - bot.x;
-          const dy = player.y - bot.y;
+          const dx = nextPlayer.x - bot.x;
+          const dy = nextPlayer.y - bot.y;
           let nextBot = { ...bot };
-          
           if (dx !== 0 && dy !== 0) {
             const axis = Math.abs(dx) > Math.abs(dy) ? "x" : Math.abs(dy) > Math.abs(dx) ? "y" : (Math.random() > 0.5 ? "x" : "y");
             if (axis === "x") {
@@ -1419,24 +1453,32 @@ function MazeGame({ game, onFinish, difficulty }) {
           const axis = Math.random() > 0.5 ? "x" : "y";
           return { ...bot, [axis]: Math.max(0, Math.min(11, bot[axis] + (Math.random() > 0.5 ? 1 : -1))) };
         }
-      }));
-      setDots((current) => {
-        const next = current.filter((dot) => dot.x !== player.x || dot.y !== player.y);
-        if (next.length !== current.length) {
-          playGameSound(game, "eat");
-          setScore((value) => value + 12);
-        }
-        if (!next.length) {
-          setRunning(false);
-          playGameSound(game, "score");
-          finish({ score: score + 300, level: 4, duration: secondsSince(startTime), detail: "Maze clear" });
-        }
-        return next;
       });
-      if (bots.some((bot) => bot.x === player.x && bot.y === player.y)) {
+
+      const ate = dots.some((dot) => dot.x === nextPlayer.x && dot.y === nextPlayer.y);
+      let nextDots = dots;
+      if (ate) {
+        playGameSound(game, "eat");
+        scoreRef.current += 12;
+        setScore(scoreRef.current);
+        nextDots = dots.filter((dot) => dot.x !== nextPlayer.x || dot.y !== nextPlayer.y);
+      }
+
+      setPlayer(nextPlayer);
+      setBots(nextBots);
+      setDots(nextDots);
+
+      if (nextBots.some((bot) => bot.x === nextPlayer.x && bot.y === nextPlayer.y)) {
         setRunning(false);
         playGameSound(game, "over");
-        finish({ score, level: Math.max(1, Math.floor(score / 100) + 1), duration: secondsSince(startTime), detail: "Maze chase" });
+        finish({ score: scoreRef.current, level: Math.max(1, Math.floor(scoreRef.current / 100) + 1), duration: secondsSince(startTime), detail: "Maze chase" });
+        return;
+      }
+
+      if (!nextDots.length) {
+        setRunning(false);
+        playGameSound(game, "score");
+        finish({ score: scoreRef.current + 300, level: 4, duration: secondsSince(startTime), detail: "Maze clear" });
       }
     },
     150,
@@ -1465,6 +1507,7 @@ function RacingGame({ game, onFinish, difficulty }) {
   const state = useRef(null);
   const [running, setRunning] = useState(false);
   const [score, setScore] = useState(0);
+  const scoreRef = useRef(0);
   const startTime = useRef(Date.now());
   const particlesRef = useRef([]);
   const shakeRef = useRef({ duration: 0, magnitude: 0 });
@@ -1473,9 +1516,10 @@ function RacingGame({ game, onFinish, difficulty }) {
 
   const start = () => {
     startTime.current = Date.now();
-    state.current = { lane: 1, cars: [], ticks: 0, score: 0 };
+    state.current = { lane: 1, cars: [], ticks: 0 };
     particlesRef.current = [];
     shakeRef.current = { duration: 0, magnitude: 0 };
+    scoreRef.current = 0;
     setScore(0);
     setRunning(true);
   };
@@ -1490,14 +1534,14 @@ function RacingGame({ game, onFinish, difficulty }) {
         if (Math.random() < 0.04 && particlesRef.current.length < 60) {
           createNeonExplosion(particlesRef.current, Math.random() * 660, Math.random() * 200 + 40, ["#2ff6d0", "#ff4ad8", "#ffcc4d", "#70ff7a", "#60a5fa"], 12);
         }
-        drawShooter(ctx, s, game, canvas, shakeRef.current, particlesRef.current);
+        drawRacing(ctx, s, game, canvas, shakeRef.current, particlesRef.current);
         return;
       }
       s.ticks += 1;
       if (keys.current.has("ArrowLeft")) s.lane = Math.max(0, s.lane - 1);
       if (keys.current.has("ArrowRight")) s.lane = Math.min(2, s.lane + 1);
       if (s.ticks % 32 === 0) s.cars.push({ lane: Math.floor(Math.random() * 3), y: -60 });
-      s.cars.forEach((car) => (car.y += 6 + score / 260));
+      s.cars.forEach((car) => (car.y += 6 + scoreRef.current / 260));
 
       const laneX = (lane) => lane * 220 + 88;
       particlesRef.current.push({
@@ -1512,13 +1556,14 @@ function RacingGame({ game, onFinish, difficulty }) {
       });
 
       s.cars = s.cars.filter((car) => car.y < 500);
-      setScore((value) => value + 1);
+      scoreRef.current += 1;
+      setScore(scoreRef.current);
       if (s.cars.some((car) => car.lane === s.lane && car.y > 318 && car.y < 386)) {
         setRunning(false);
         playGameSound(game, "over");
         createNeonExplosion(particlesRef.current, laneX(s.lane) + 27, 386, ["#ffffff", game.colors[1]], 20);
         shakeRef.current = { duration: 25, magnitude: 10 };
-        finish({ score, level: Math.max(1, Math.floor(score / 200) + 1), duration: secondsSince(startTime), detail: "Distance run" });
+        finish({ score: scoreRef.current, level: Math.max(1, Math.floor(scoreRef.current / 200) + 1), duration: secondsSince(startTime), detail: "Distance run" });
       }
       drawRacing(ctx, s, game, canvas, shakeRef.current, particlesRef.current);
     },
@@ -1582,6 +1627,8 @@ function TowerGame({ game, onFinish, difficulty }) {
   const [health, setHealth] = useState(8);
   const [score, setScore] = useState(0);
   const [running, setRunning] = useState(false);
+  const scoreRef = useRef(0);
+  const healthRef = useRef(8);
   const startTime = useRef(Date.now());
   const slots = [{ x: 2, y: 2 }, { x: 5, y: 3 }, { x: 8, y: 2 }, { x: 3, y: 6 }, { x: 7, y: 7 }, { x: 10, y: 5 }];
 
@@ -1589,8 +1636,12 @@ function TowerGame({ game, onFinish, difficulty }) {
     startTime.current = Date.now();
     setTurrets([]);
     setEnemies([]);
-    setCoins(difficulty === "easy" ? 90 : difficulty === "hard" ? 40 : 60);
-    setHealth(difficulty === "easy" ? 12 : difficulty === "hard" ? 5 : 8);
+    const initialCoins = difficulty === "easy" ? 90 : difficulty === "hard" ? 40 : 60;
+    const initialHealth = difficulty === "easy" ? 12 : difficulty === "hard" ? 5 : 8;
+    setCoins(initialCoins);
+    healthRef.current = initialHealth;
+    setHealth(initialHealth);
+    scoreRef.current = 0;
     setScore(0);
     setRunning(true);
   };
@@ -1604,24 +1655,39 @@ function TowerGame({ game, onFinish, difficulty }) {
 
   useInterval(
     () => {
-      setEnemies((current) => {
-        let next = current.map((enemy) => ({ ...enemy, x: enemy.x + 1, hp: enemy.hp - turrets.filter((t) => Math.abs(t.x - enemy.x) <= 2 && Math.abs(t.y - enemy.y) <= 2).length }));
-        const defeated = next.filter((enemy) => enemy.hp <= 0).length;
-        if (defeated) {
-          playGameSound(game, "hit");
-          setScore((value) => value + defeated * 25);
-          setCoins((value) => value + defeated * 8);
-        }
-        next = next.filter((enemy) => enemy.hp > 0);
-        const escaped = next.filter((enemy) => enemy.x > 11).length;
-        if (escaped) setHealth((value) => value - escaped);
-        return next.filter((enemy) => enemy.x <= 11);
-      });
-      if (Math.random() > 0.56) setEnemies((current) => [...current, { x: 0, y: [1, 4, 8][Math.floor(Math.random() * 3)], hp: 2 + Math.floor(score / 180) }]);
-      if (health <= 0) {
+      let nextEnemies = enemies.map((enemy) => ({
+        ...enemy,
+        x: enemy.x + 1,
+        hp: enemy.hp - turrets.filter((t) => Math.abs(t.x - enemy.x) <= 2 && Math.abs(t.y - enemy.y) <= 2).length
+      }));
+      const defeated = nextEnemies.filter((enemy) => enemy.hp <= 0).length;
+      if (defeated) {
+        playGameSound(game, "hit");
+        scoreRef.current += defeated * 25;
+        setScore(scoreRef.current);
+        setCoins((value) => value + defeated * 8);
+      }
+      nextEnemies = nextEnemies.filter((enemy) => enemy.hp > 0);
+      const escaped = nextEnemies.filter((enemy) => enemy.x > 11).length;
+      if (escaped) {
+        healthRef.current -= escaped;
+        setHealth(healthRef.current);
+      }
+      const filteredEnemies = nextEnemies.filter((enemy) => enemy.x <= 11);
+
+      if (Math.random() > 0.56) {
+        filteredEnemies.push({
+          x: 0,
+          y: [1, 4, 8][Math.floor(Math.random() * 3)],
+          hp: 2 + Math.floor(scoreRef.current / 180)
+        });
+      }
+      setEnemies(filteredEnemies);
+
+      if (healthRef.current <= 0) {
         setRunning(false);
         playGameSound(game, "over");
-        finish({ score, level: Math.max(1, Math.floor(score / 180) + 1), duration: secondsSince(startTime), detail: "Waves held" });
+        finish({ score: scoreRef.current, level: Math.max(1, Math.floor(scoreRef.current / 180) + 1), duration: secondsSince(startTime), detail: "Waves held" });
       }
     },
     650,
@@ -1647,11 +1713,13 @@ function WhackGame({ game, onFinish, difficulty }) {
   const finish = useFinish(onFinish);
   const [active, setActive] = useState(4);
   const [score, setScore] = useState(0);
+  const scoreRef = useRef(0);
   const [time, setTime] = useState(30);
   const [running, setRunning] = useState(false);
 
   const restart = () => {
     setActive(Math.floor(Math.random() * 9));
+    scoreRef.current = 0;
     setScore(0);
     setTime(30);
     setRunning(true);
@@ -1662,7 +1730,7 @@ function WhackGame({ game, onFinish, difficulty }) {
       if (value <= 1) {
         setRunning(false);
         playGameSound(game, "over");
-        finish({ score, level: Math.max(1, Math.floor(score / 120) + 1), duration: 30, detail: "Bots hit" });
+        finish({ score: scoreRef.current, level: Math.max(1, Math.floor(scoreRef.current / 120) + 1), duration: 30, detail: "Bots hit" });
         return 0;
       }
       return value - 1;
@@ -1676,11 +1744,13 @@ function WhackGame({ game, onFinish, difficulty }) {
     if (!running) return;
     if (index === active) {
       playGameSound(game, "score");
-      setScore((value) => value + 15);
+      scoreRef.current += 15;
+      setScore(scoreRef.current);
       setActive(Math.floor(Math.random() * 9));
     } else {
       playGameSound(game, "hit");
-      setScore((value) => Math.max(0, value - 5));
+      scoreRef.current = Math.max(0, scoreRef.current - 5);
+      setScore(scoreRef.current);
     }
   };
 
@@ -1698,6 +1768,7 @@ function WordGame({ game, onFinish, difficulty }) {
   const [word, setWord] = useState(() => WORDS[0]);
   const [input, setInput] = useState("");
   const [score, setScore] = useState(0);
+  const scoreRef = useRef(0);
   const [time, setTime] = useState(45);
   const [running, setRunning] = useState(false);
 
@@ -1710,6 +1781,7 @@ function WordGame({ game, onFinish, difficulty }) {
   const restart = () => {
     setWord(nextWord());
     setInput("");
+    scoreRef.current = 0;
     setScore(0);
     setTime(45);
     setRunning(true);
@@ -1719,7 +1791,8 @@ function WordGame({ game, onFinish, difficulty }) {
     if (!running) return;
     if (input.trim().toUpperCase() === word) {
       playGameSound(game, "score");
-      setScore((value) => value + word.length * 20);
+      scoreRef.current += word.length * 20;
+      setScore(scoreRef.current);
       setWord(nextWord());
       setInput("");
     } else {
@@ -1732,7 +1805,7 @@ function WordGame({ game, onFinish, difficulty }) {
       if (value <= 1) {
         setRunning(false);
         playGameSound(game, "over");
-        finish({ score, level: Math.max(1, Math.floor(score / 180) + 1), duration: 45, detail: "Words solved" });
+        finish({ score: scoreRef.current, level: Math.max(1, Math.floor(scoreRef.current / 180) + 1), duration: 45, detail: "Words solved" });
         return 0;
       }
       return value - 1;
@@ -1750,17 +1823,19 @@ function WordGame({ game, onFinish, difficulty }) {
   );
 }
 
-function CheckersGame({ game, onFinish }) {
+function CheckersGame({ game, onFinish, difficulty }) {
   const finish = useFinish(onFinish);
   const [pieces, setPieces] = useState(makeCheckers());
   const [selected, setSelected] = useState(null);
   const [score, setScore] = useState(0);
+  const scoreRef = useRef(0);
   const startTime = useRef(Date.now());
 
   const restart = () => {
     startTime.current = Date.now();
     setPieces(makeCheckers());
     setSelected(null);
+    scoreRef.current = 0;
     setScore(0);
   };
 
@@ -1784,16 +1859,18 @@ function CheckersGame({ game, onFinish }) {
     if (legalJump) {
       playGameSound(game, "score");
       next = next.filter((p) => p.id !== jumped.id);
-      setScore((value) => value + 80);
+      scoreRef.current += 80;
+      setScore(scoreRef.current);
     } else {
       playGameSound(game, "tap");
-      setScore((value) => value + 10);
+      scoreRef.current += 10;
+      setScore(scoreRef.current);
     }
     setSelected(null);
     const aiPieces = next.filter((p) => p.side === "ai");
     if (!aiPieces.length) {
       playGameSound(game, "score");
-      finish({ score: score + 400, level: 4, duration: secondsSince(startTime), detail: "Board won" });
+      finish({ score: scoreRef.current + 400, level: 4, duration: secondsSince(startTime), detail: "Board won" });
       setPieces(next);
       return;
     }
@@ -1815,12 +1892,12 @@ function CheckersGame({ game, onFinish }) {
           const piece = pieces.find((p) => p.x === x && p.y === y);
           return (
             <button key={index} type="button" className={`checker-cell ${(x + y) % 2 ? "dark" : ""}`} onClick={() => clickCell(x, y)}>
-              {piece ? <span className={`checker-piece ${piece.side} ${selected?.id === piece.id ? "selected" : ""}`} /> : null}
+               {piece ? <span className={`checker-piece ${piece.side} ${selected?.id === piece.id ? "selected" : ""}`} /> : null}
             </button>
           );
         })}
       </div>
-      <ArcadeButton onClick={() => finish({ score, duration: secondsSince(startTime), detail: "Checkers run" })}>Submit run</ArcadeButton>
+      <ArcadeButton onClick={() => finish({ score: scoreRef.current, duration: secondsSince(startTime), detail: "Checkers run" })}>Submit run</ArcadeButton>
     </GameShell>
   );
 }
