@@ -447,6 +447,7 @@ function SnakeGame({ game, onFinish, difficulty }) {
 
   useEffect(() => {
     const handler = (event) => {
+      if (crashed) return;
       const map = {
         ArrowUp: { x: 0, y: -1 },
         KeyW: { x: 0, y: -1 },
@@ -466,7 +467,7 @@ function SnakeGame({ game, onFinish, difficulty }) {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [dir]);
+  }, [dir, crashed]);
 
   const snakeSpeed = difficulty === "easy" ? Math.max(110, 200 - score / 8) :
                       difficulty === "hard" ? Math.max(45, 100 - score / 12) :
@@ -534,7 +535,10 @@ function SnakeGame({ game, onFinish, difficulty }) {
               type="button"
               className={`pixel ${snakeClass} ${food.x === cell.x && food.y === cell.y ? "food-cell" : ""}`}
               style={isSnake ? { backgroundColor: cellColor, boxShadow: `0 0 8px ${cellColor}` } : {}}
-              onClick={() => setRunning(true)}
+              onClick={() => {
+                if (crashed) return;
+                setRunning(true);
+              }}
             >
               {isHead && crashed && (
                 <>
