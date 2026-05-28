@@ -399,7 +399,7 @@ function GameShell({ game, title, score, meta, children, controls, onStart, runn
       <div className="play-header">
         <div>
           <span>{title}</span>
-          <strong>{score}</strong>
+          <strong key={score} className="score-value score-pulse">{score}</strong>
         </div>
         <p>{meta}</p>
         <div className="play-actions">
@@ -426,6 +426,7 @@ function GameShell({ game, title, score, meta, children, controls, onStart, runn
 function SnakeGame({ game, onFinish, difficulty }) {
   const finish = useFinish(onFinish);
   const [running, setRunning] = useState(false);
+  const [crashed, setCrashed] = useState(false);
   const [snake, setSnake] = useState([{ x: 7, y: 8 }, { x: 6, y: 8 }, { x: 5, y: 8 }, { x: 4, y: 8 }]);
   const [food, setFood] = useState({ x: 11, y: 8 });
   const [dir, setDir] = useState({ x: 1, y: 0 });
@@ -440,6 +441,7 @@ function SnakeGame({ game, onFinish, difficulty }) {
     setDir({ x: 1, y: 0 });
     scoreRef.current = 0;
     setScore(0);
+    setCrashed(false);
     setRunning(true);
   };
 
@@ -477,10 +479,11 @@ function SnakeGame({ game, onFinish, difficulty }) {
         const next = { x: head.x + dir.x, y: head.y + dir.y };
         const collision = next.x < 0 || next.y < 0 || next.x >= BOARD || next.y >= BOARD || current.some((cell) => cell.x === next.x && cell.y === next.y);
         if (collision) {
+          setCrashed(true);
+          setRunning(false);
           window.setTimeout(() => {
-            setRunning(false);
             finish({ score: scoreRef.current, duration: secondsSince(startTime), detail: "Collision detected" });
-          }, 0);
+          }, 800);
           return current;
         }
 
@@ -501,16 +504,49 @@ function SnakeGame({ game, onFinish, difficulty }) {
     running
   );
 
-  const snakeKeys = new Set(snake.map(keyOf));
-  const snakeHead = keyOf(snake[0]);
+  const snakeHead = snake[0];
+  const snakeHeadKey = keyOf(snakeHead);
+
+  const getSnakeCellColor = (index, length) => {
+    // headHue: Lime Green (95) for small length, Orange (35) for medium, Red (0) for large
+    const headHue = length < 8 ? 95 : length < 16 ? 35 : 0;
+    // The body segments fade from headHue to standard green (120)
+    const percent = index / Math.max(1, length - 1);
+    const hue = headHue + (120 - headHue) * percent;
+    return `hsl(${hue}, 100%, 50%)`;
+  };
+
   return (
     <GameShell game={game} title="Score" score={score} meta={`Length ${snake.length}`} controls={game.controls} onStart={restart} running={running}>
       <div className="pixel-board snake-board" style={{ gridTemplateColumns: `repeat(${BOARD}, 1fr)` }}>
         {Array.from({ length: BOARD * BOARD }, (_, index) => {
           const cell = { x: index % BOARD, y: Math.floor(index / BOARD) };
           const key = keyOf(cell);
-          const snakeClass = snakeKeys.has(key) ? (key === snakeHead ? "snake-head" : "snake-cell") : "";
-          return <button key={key} type="button" className={`pixel ${snakeClass} ${food.x === cell.x && food.y === cell.y ? "food-cell" : ""}`} onClick={() => setRunning(true)} />;
+          const segmentIndex = snake.findIndex((s) => s.x === cell.x && s.y === cell.y);
+          const isSnake = segmentIndex !== -1;
+          const isHead = isSnake && segmentIndex === 0;
+          const snakeClass = isSnake ? (isHead ? "snake-head" : "snake-cell") : "";
+          const cellColor = isSnake ? getSnakeCellColor(segmentIndex, snake.length) : null;
+
+          return (
+            <button
+              key={key}
+              type="button"
+              className={`pixel ${snakeClass} ${food.x === cell.x && food.y === cell.y ? "food-cell" : ""}`}
+              style={isSnake ? { backgroundColor: cellColor, boxShadow: `0 0 8px ${cellColor}` } : {}}
+              onClick={() => setRunning(true)}
+            >
+              {isHead && crashed && (
+                <>
+                  <span className="crash-star" style={{ "--angle": "0deg" }}>★</span>
+                  <span className="crash-star" style={{ "--angle": "72deg" }}>★</span>
+                  <span className="crash-star" style={{ "--angle": "144deg" }}>★</span>
+                  <span className="crash-star" style={{ "--angle": "216deg" }}>★</span>
+                  <span className="crash-star" style={{ "--angle": "288deg" }}>★</span>
+                </>
+              )}
+            </button>
+          );
         })}
       </div>
     </GameShell>
