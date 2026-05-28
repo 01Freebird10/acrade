@@ -739,7 +739,14 @@ function CanvasBallGame({ game, onFinish, mode, difficulty }) {
       const ctx = canvas?.getContext("2d");
       if (!ctx || !state.current) return;
       const s = state.current;
-      
+      if (!running) {
+        if (Math.random() < 0.04 && particlesRef.current.length < 60) {
+          createNeonExplosion(particlesRef.current, Math.random() * 660, Math.random() * 200 + 40, ["#2ff6d0", "#ff4ad8", "#ffcc4d", "#70ff7a", "#60a5fa"], 12);
+        }
+        drawBallCanvas(ctx, s, mode, game, canvas, shakeRef.current, particlesRef.current);
+        return;
+      }
+
       // Paddle position constraints based on game mode
       if (mode === "pong") {
         s.paddle = Math.max(0, Math.min(430 - 92, s.paddle));
