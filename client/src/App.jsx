@@ -584,7 +584,8 @@ export default function App() {
         gameName: selectedGame.name,
         difficulty,
         score: scoreVal,
-        isNewBest
+        isNewBest,
+        detail: result.detail || ""
       });
       await loadScores(selectedGame.id);
       await loadLeaderboard(boardGameId);
@@ -1471,6 +1472,11 @@ function GameOverModal({ gameOverRun, onClose }) {
             <strong>{gameOverRun?.score}</strong>
           </div>
         </div>
+        {gameOverRun?.detail && (
+          <div className="game-over-detail-alert">
+            {gameOverRun.detail}
+          </div>
+        )}
         <button type="button" className={`primary-button level-modal-action ${isBest ? "gold-glow" : "red-glow"}`} onClick={onClose}>
           {isBest ? "Awesome!" : "Try Again"}
         </button>
