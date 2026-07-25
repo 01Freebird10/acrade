@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: acrade-game
+    runtime: node
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false
+      - key: AUTH_SECRET
+        generateValue: true
+      - key: CLIENT_ORIGIN
+        sync: false
